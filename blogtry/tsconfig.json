@@ -1,0 +1,21 @@
+{
+    // 1. 继承官方预设配置
+  "extends": "@vue/tsconfig/tsconfig.dom.json",
+   // 2. 指定TS需要检查的文件范围
+  "include": ["src/vite-env.d.ts", "src/**/*", "src/**/*.vue"],
+   // 3. 指定TS忽略的文件
+  "exclude": ["src/**/__tests__/*"],
+  "files": [],
+  "compilerOptions": {
+    "composite": true,
+   
+    
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "jsx": "preserve",
+    "jsxImportSource": "vue"
+    // "types": ["element-plus/global"]
+  }
+
+}
