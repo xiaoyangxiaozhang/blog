@@ -264,7 +264,9 @@ const userAvatar = computed(() => {
   return resolveAvatarUrl(rawAvatar.value)
 })
 const nickName = computed(() => authStore.getUserInfo()?.nickname || 'Admin')
-const hitokoto=ref('加载中.....')
+const hitokoto = ref('加载中…')
+const HITOKOTO_API = 'https://v1.hitokoto.cn/?c=i&encode=json'
+const HITOKOTO_FALLBACK = '愿你今天也有好心情。'
 
 
 
@@ -332,13 +334,32 @@ const fetchDashboardData = async () => {
 }
 // 获取随机一言
 const fetchHitokoto = async () => {
+  const controller = new AbortController()
+  const timeoutId = window.setTimeout(() => controller.abort(), 8000)
+
   try {
-    const response = await fetch('https://api.pearktrue.cn/api/hitokoto/')
-    const text = await response.text()
-    hitokoto.value = text || '获取一言失败'
+    const response = await fetch(HITOKOTO_API, {
+      signal: controller.signal,
+      headers: { Accept: 'application/json' }
+    })
+
+    if (!response.ok) {
+      throw new Error(`一言接口返回 HTTP ${response.status}`)
+    }
+
+    const data = await response.json() as { hitokoto?: string }
+    const sentence = data.hitokoto?.trim()
+
+    if (!sentence) {
+      throw new Error('一言接口没有返回有效内容')
+    }
+
+    hitokoto.value = sentence
   } catch (error) {
     console.error('获取一言失败:', error)
-    hitokoto.value = '获取一言失败'
+    hitokoto.value = HITOKOTO_FALLBACK
+  } finally {
+    window.clearTimeout(timeoutId)
   }
 }
 // 生成可用年份
