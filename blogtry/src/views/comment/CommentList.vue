@@ -277,9 +277,9 @@ onMounted(fetchComments)
 <style scoped lang="scss">
 .reply-info {
   padding: 12px;
-  background-color: #f5f7fa;
-  border-radius: 4px;
-  border: 1px solid #dcdfe6;
+  background-color: var(--admin-surface-soft);
+  border-radius: var(--admin-radius-control);
+  border: 1px solid var(--admin-border);
 
   .info-row {
     display: flex;
@@ -292,12 +292,12 @@ onMounted(fetchComments)
     }
 
     .label {
-      color: #909399;
+      color: var(--admin-text-muted);
       flex-shrink: 0;
     }
 
     .value {
-      color: #606266;
+      color: var(--admin-text-secondary);
       display: flex;
       align-items: center;
       gap: 6px;
@@ -306,18 +306,18 @@ onMounted(fetchComments)
 
   .reply-to {
     font-size: 14px;
-    color: #606266;
+    color: var(--admin-text-secondary);
     margin-bottom: 8px;
 
     .nickname {
-      color: #409eff;
+      color: var(--admin-brand);
       font-weight: 500;
     }
   }
 
   .original-content {
     font-size: 13px;
-    color: #909399;
+    color: var(--admin-text-muted);
     line-height: 1.6;
     white-space: pre-wrap;
     word-wrap: break-word;

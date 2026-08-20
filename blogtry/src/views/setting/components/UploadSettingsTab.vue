@@ -201,7 +201,7 @@ const domainPlaceholder = computed(() => {
 <style lang="scss" scoped>
 .unit-tip {
   margin-left: 8px;
-  color: #909399;
+  color: var(--admin-text-muted);
 }
 
 @media (max-width: 768px) {

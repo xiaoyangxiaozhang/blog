@@ -17,7 +17,9 @@
           <Header :layout-mode="layoutMode" :sidebar-collapsed="sidebarCollapsed" @toggle-sidebar="toggleSidebar" />
         </el-header>
         <el-main>
-          <router-view />
+          <div class="admin-main-shell">
+            <router-view />
+          </div>
         </el-main>
       </el-container>
     </el-container>
@@ -54,6 +56,8 @@ const handleMenuClick = () => {
 .admin-layout {
   height: 100vh;
   position: relative;
+  background: var(--admin-bg);
+  color: var(--admin-text);
 }
 
 // 隐藏 checkbox
@@ -66,8 +70,9 @@ const handleMenuClick = () => {
 }
 
 .sidebar {
-  background-color: #304156;
-  transition: width 0.3s;
+  background-color: var(--admin-surface);
+  border-right: 1px solid var(--admin-border);
+  transition: width 0.25s ease;
   overflow: hidden;
 
   // 移动端抽屉效果
@@ -78,7 +83,7 @@ const handleMenuClick = () => {
     bottom: 0;
     width: 200px !important;
     z-index: 2000;
-    transition: left 0.3s;
+    transition: left 0.25s ease;
   }
 }
 
@@ -93,7 +98,7 @@ const handleMenuClick = () => {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.68);
     z-index: 1999;
     opacity: 0;
     pointer-events: none;
@@ -117,10 +122,13 @@ const handleMenuClick = () => {
 }
 
 .el-header {
-  background-color: #fff;
-  border-bottom: 1px solid #dcdfe6;
+  background: color-mix(in srgb, var(--bg-primary) 76%, transparent);
+  border-bottom: 1px solid var(--border-color);
+  backdrop-filter: blur(15px);
   padding: 0;
   height: 60px;
+  position: relative;
+  z-index: 10;
 }
 
 .el-container {
@@ -128,12 +136,17 @@ const handleMenuClick = () => {
 }
 
 .el-main {
-  background-color: #f0f2f5;
-  padding: 20px;
+  background: var(--home-surface);
+  padding: 38px 40px 56px;
   overflow: auto;
 
+  .admin-main-shell {
+    width: min(1120px, 100%);
+    margin: 0 auto;
+  }
+
   @media (max-width: 768px) {
-    padding: 12px;
+    padding: 28px 16px 40px;
   }
 }
 </style>

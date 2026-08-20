@@ -2,10 +2,11 @@
   <div>
   <div class="sidebar" :class="{ 'is-collapse': isCollapse }">
     <div class="logo">
-      <span v-show="!isCollapse">小羊管理系统</span>
+      <span class="logo-mark" aria-hidden="true">羊</span>
+      <span v-show="!isCollapse" class="logo-label">小羊管理系统</span>
     </div>
-    <el-menu :default-active="route.path" :collapse="isCollapse" background-color="#304156" text-color="#bfcbd9"
-      active-text-color="#409eff" router @select="handleMenuSelect">
+    <el-menu class="admin-menu" :default-active="route.path" :collapse="isCollapse" background-color="transparent"
+      text-color="var(--admin-text-muted)" active-text-color="var(--admin-brand)" router @select="handleMenuSelect">
       <el-menu-item index="/">
         <i class="ri-dashboard-2-line ri-lg"></i>
         <template #title><span>仪表盘</span></template>
@@ -104,41 +105,86 @@ const handleMenuSelect = () => {
 <style scoped lang="scss">
 .sidebar {
   height: 100%;
+  padding: 0 10px;
 
   .logo {
-    height: 60px;
-    padding: 10px 0;
-    margin-bottom: 10px;
+    height: 64px;
+    padding: 10px 8px;
+    margin-bottom: 12px;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
+    gap: 10px;
 
-    span {
-      color: #fff;
-      font-size: 16px;
+    .logo-mark {
+      width: 34px;
+      height: 34px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 34px;
+      border-radius: var(--admin-radius-pill);
+      background: var(--admin-brand);
+      color: #ffffff;
+      font-size: 17px;
       font-weight: 600;
+      box-shadow: 0 0 24px var(--admin-brand-soft);
+    }
+
+    .logo-label {
+      color: var(--admin-text);
+      font-size: 15px;
+      letter-spacing: 0.02em;
+      font-weight: 600;
+      white-space: nowrap;
     }
   }
 
   &.is-collapse {
     .logo {
-      padding: 10px;
-
-      span {
-        display: none;
-      }
+      padding: 10px 4px;
+      justify-content: center;
     }
   }
 
   :deep(.el-menu) {
     border-right: none;
+    background: transparent;
 
     .el-menu-item,
     .el-sub-menu__title {
-      font-size: 16px;
+      height: 44px;
+      margin: 4px 0;
+      border-radius: var(--admin-radius-control);
+      font-size: 14px;
+      transition: background-color 180ms ease, color 180ms ease;
 
       i {
+        width: 20px;
         margin-right: 10px;
+        color: currentColor;
+      }
+
+      &:hover {
+        background: var(--admin-brand-soft);
+        color: var(--admin-text);
+      }
+    }
+
+    .el-menu-item.is-active {
+      background: var(--admin-brand-soft);
+      color: var(--admin-brand);
+      font-weight: 600;
+    }
+
+    .el-sub-menu .el-menu {
+      background: transparent;
+      padding: 2px 0 4px 14px;
+
+      .el-menu-item {
+        min-width: 0;
+        padding-left: 28px !important;
+        font-size: 13px;
       }
     }
   }

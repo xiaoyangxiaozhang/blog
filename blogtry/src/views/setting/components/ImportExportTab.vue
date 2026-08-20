@@ -23,7 +23,7 @@
     <el-alert v-if="articleImportResult" :type="articleImportResult.failed > 0 ? 'warning' : 'success'"
       :closable="false" style="margin-top: 16px">
       <div>成功 {{ articleImportResult.success }} 篇，失败 {{ articleImportResult.failed }} 篇</div>
-      <div v-if="articleImportResult.errors?.length" style="margin-top: 8px; font-size: 12px; color: #909399;">
+      <div v-if="articleImportResult.errors?.length" style="margin-top: 8px; font-size: 12px; color: var(--admin-text-muted);">
         <div v-for="(err, i) in articleImportResult.errors" :key="i">{{ err.filename }}: {{ err.error }}</div>
       </div>
     </el-alert>
@@ -72,11 +72,11 @@
         总计 {{ commentImportResult.total }} 条，成功 {{ commentImportResult.success }} 条，失败 {{ commentImportResult.failed }}
         条
       </div>
-      <div v-if="commentImportResult.user_created > 0" style="margin-top: 4px; font-size: 12px; color: #909399">
+      <div v-if="commentImportResult.user_created > 0" style="margin-top: 4px; font-size: 12px; color: var(--admin-text-muted)">
         自动创建了 {{ commentImportResult.user_created }} 个游客用户账号
       </div>
       <div v-if="commentImportResult.errors?.length"
-        style="margin-top: 12px; font-size: 12px; color: #909399; max-height: 200px; overflow-y: auto">
+        style="margin-top: 12px; font-size: 12px; color: var(--admin-text-muted); max-height: 200px; overflow-y: auto">
         <div><strong>失败详情：</strong></div>
         <div v-for="(err, i) in commentImportResult.errors" :key="i" style="margin-top: 4px">
           第 {{ err.index + 1 }} 条: {{ err.error }}
@@ -254,7 +254,7 @@ watch(commentImportVisible, (val) => {
 
 .form-tip {
   font-size: 12px;
-  color: #909399;
+  color: var(--admin-text-muted);
   line-height: 1.5;
   margin-top: 8px;
 }

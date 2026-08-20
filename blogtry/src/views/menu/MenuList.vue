@@ -200,7 +200,7 @@ onMounted(() => {
   .menu-icon {
     margin-right: 8px;
     font-size: 16px;
-    color: #606266;
+    color: var(--admin-text-secondary);
   }
 
   .menu-icon-img {
@@ -216,7 +216,7 @@ onMounted(() => {
 :deep(.el-table) {
   .el-table__expand-icon {
     font-size: 14px;
-    color: #606266;
+    color: var(--admin-text-secondary);
 
     &.el-table__expand-icon--expanded {
       transform: rotate(90deg);

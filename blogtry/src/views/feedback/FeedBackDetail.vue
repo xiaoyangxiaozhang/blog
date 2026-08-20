@@ -422,7 +422,7 @@ onMounted(() => {
     .title {
       font-size: 18px;
       font-weight: 600;
-      color: #303133;
+      color: var(--admin-text);
     }
   }
 
@@ -433,15 +433,15 @@ onMounted(() => {
       .section-title {
         font-size: 16px;
         font-weight: 600;
-        color: #303133;
+        color: var(--admin-text);
         margin-bottom: 12px;
       }
 
       .content-box {
         padding: 16px;
-        background-color: #f5f7fa;
-        border-radius: 4px;
-        border: 1px solid #dcdfe6;
+        background-color: var(--admin-surface-soft);
+        border-radius: var(--admin-radius-control);
+        border: 1px solid var(--admin-border);
 
         pre {
           margin: 0;
@@ -449,7 +449,7 @@ onMounted(() => {
           white-space: pre-wrap;
           word-wrap: break-word;
           line-height: 1.6;
-          color: #606266;
+          color: var(--admin-text-secondary);
         }
 
         .form-content {
@@ -461,18 +461,18 @@ onMounted(() => {
             }
 
             strong {
-              color: #303133;
+              color: var(--admin-text);
               display: block;
               margin-bottom: 8px;
               font-size: 14px;
             }
 
             .field-value {
-              color: #606266;
+              color: var(--admin-text-secondary);
               line-height: 1.6;
 
               .empty-text {
-                color: #909399;
+                color: var(--admin-text-muted);
                 font-style: italic;
               }
 
@@ -494,7 +494,7 @@ onMounted(() => {
         }
 
         .empty-content {
-          color: #909399;
+          color: var(--admin-text-muted);
           text-align: center;
           font-style: italic;
         }
@@ -502,7 +502,7 @@ onMounted(() => {
     }
 
     .url-link {
-      color: #409eff;
+      color: var(--admin-brand);
       text-decoration: none;
 
       &:hover {
@@ -515,7 +515,7 @@ onMounted(() => {
         margin-top: 8px;
         font-family: monospace;
         font-size: 12px;
-        color: #666;
+        color: var(--admin-text-secondary);
         word-break: break-all;
       }
     }
@@ -526,7 +526,7 @@ onMounted(() => {
       .section-title {
         font-size: 16px;
         font-weight: 600;
-        color: #303133;
+        color: var(--admin-text);
         margin-bottom: 16px;
       }
     }

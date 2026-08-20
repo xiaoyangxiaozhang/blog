@@ -397,9 +397,9 @@ onUnmounted(() => {
 .version-block {
   margin-bottom: 20px;
   padding: 16px 20px;
-  border: 1px solid #e4e7ed;
-  border-radius: 8px;
-  background: #fafafa;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-control);
+  background: var(--admin-surface-soft);
 }
 
 .version-list {
@@ -416,13 +416,13 @@ onUnmounted(() => {
   min-width: 0;
 
   .label {
-    color: #909399;
+    color: var(--admin-text-muted);
     font-size: 13px;
     line-height: 1.4;
   }
 
   .value {
-    color: #303133;
+    color: var(--admin-text);
     font-size: 14px;
     line-height: 1.6;
     word-break: break-all;
@@ -446,8 +446,8 @@ onUnmounted(() => {
 }
 
 .info-section {
-  border: 1px solid #e4e7ed;
-  border-radius: 8px;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-control);
   overflow: hidden;
 
   .section-header {
@@ -455,13 +455,13 @@ onUnmounted(() => {
     align-items: center;
     gap: 8px;
     padding: 12px 16px;
-    background: #f5f7fa;
-    border-bottom: 1px solid #e4e7ed;
+    background: var(--admin-surface-soft);
+    border-bottom: 1px solid var(--admin-border);
     font-weight: 500;
     font-size: 14px;
 
     .icon-blue {
-      color: #409eff;
+      color: var(--admin-brand);
       font-size: 16px;
     }
 
@@ -502,20 +502,20 @@ onUnmounted(() => {
   justify-content: space-between;
   gap: 12px;
   padding: 8px 0;
-  border-bottom: 1px dashed #ebeef5;
+    border-bottom: 1px dashed var(--admin-border-soft);
 
   &:last-child {
     border-bottom: none;
   }
 
   .label {
-    color: #909399;
+    color: var(--admin-text-muted);
     font-size: 14px;
     flex-shrink: 0;
   }
 
   .value {
-    color: #303133;
+    color: var(--admin-text);
     font-size: 14px;
     text-align: right;
     word-break: break-all;
@@ -534,7 +534,7 @@ onUnmounted(() => {
   }
 
   .link-value {
-    color: #409eff;
+    color: var(--admin-brand);
     font-size: 14px;
     text-align: right;
     word-break: break-all;

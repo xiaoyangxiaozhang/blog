@@ -13,7 +13,7 @@
     <el-table-column label="文件名" min-width="180">
       <template #default="{ row }">
         <span style="margin-right: 8px;font-weight: 500">{{ row.file_name }}</span>
-        <span style="font-size: 12px; color: #909399">{{ formatFileSize(row.file_size) }}</span>
+        <span style="font-size: 12px; color: var(--admin-text-muted)">{{ formatFileSize(row.file_size) }}</span>
       </template>
     </el-table-column>
 

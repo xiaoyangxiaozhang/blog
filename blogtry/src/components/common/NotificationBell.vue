@@ -253,7 +253,7 @@ onUnmounted(() => timer && clearInterval(timer))
 
 <style scoped lang="scss">
 .notification-bell {
-  margin-right: 20px;
+  margin-right: 14px;
 }
 
 .notification-popover {
@@ -264,7 +264,7 @@ onUnmounted(() => timer && clearInterval(timer))
     justify-content: space-between;
     align-items: center;
     padding: 10px 15px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--admin-border);
 
     .title {
       font-weight: 600;
@@ -278,7 +278,7 @@ onUnmounted(() => timer && clearInterval(timer))
     .empty {
       padding: 30px;
       text-align: center;
-      color: #999;
+      color: var(--admin-text-muted);
     }
 
     .load-more,
@@ -289,19 +289,19 @@ onUnmounted(() => timer && clearInterval(timer))
     }
 
     .no-more {
-      color: #999;
+      color: var(--admin-text-muted);
     }
 
     .notification-item {
       display: flex;
       align-items: flex-start;
       padding: 12px 15px;
-      border-bottom: 1px solid #f5f5f5;
+      border-bottom: 1px solid var(--admin-border-soft);
       cursor: pointer;
       transition: background-color 0.2s;
 
       &:hover {
-        background-color: #f9f9f9;
+        background-color: var(--admin-brand-soft);
       }
 
       &:last-child {
@@ -342,7 +342,7 @@ onUnmounted(() => timer && clearInterval(timer))
             .notification-title {
               font-weight: 500;
               font-size: 14px;
-              color: #303133;
+              color: var(--admin-text);
               line-height: 1.4;
               word-break: break-all;
             }
@@ -350,7 +350,7 @@ onUnmounted(() => timer && clearInterval(timer))
 
           .notification-time {
             font-size: 12px;
-            color: #999;
+            color: var(--admin-text-muted);
             white-space: nowrap;
             margin-left: 8px;
           }
@@ -358,7 +358,7 @@ onUnmounted(() => timer && clearInterval(timer))
 
         .notification-content {
           font-size: 13px;
-          color: #666;
+          color: var(--admin-text-secondary);
           line-height: 1.4;
           word-break: break-all;
           display: -webkit-box;

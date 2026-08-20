@@ -897,7 +897,7 @@ onBeforeRouteLeave(async (_, __, next) => {
 <style scoped lang="scss">
 .article-editor-page {
   height: 100vh; // 固定视窗高度，让编辑器 footer 固定在底部
-  background: #ffffff;
+  background: var(--admin-bg);
   display: flex;
   flex-direction: column;
   overflow: hidden; // 防止整体页面滚动
@@ -907,14 +907,14 @@ onBeforeRouteLeave(async (_, __, next) => {
     position: sticky;
     top: 0;
     z-index: 100;
-    background: rgba(255, 255, 255, 0.95);
+    background: color-mix(in srgb, var(--admin-surface) 92%, transparent);
     backdrop-filter: blur(10px);
-    border-bottom: 1px solid #e4e7ed;
+    border-bottom: 1px solid var(--admin-border);
     padding: 12px 24px;
     display: flex;
     align-items: center;
     gap: 16px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.2);
 
     .header-left {
       display: flex;
@@ -925,7 +925,7 @@ onBeforeRouteLeave(async (_, __, next) => {
       .page-label {
         font-size: 14px;
         font-weight: 500;
-        color: #606266;
+        color: var(--admin-text-secondary);
         white-space: nowrap;
       }
     }
@@ -933,8 +933,8 @@ onBeforeRouteLeave(async (_, __, next) => {
     .header-center {
       flex: 1;
       min-width: 0;
-      border: 1px solid #757575;
-      border-radius: 4px;
+      border: 1px solid var(--admin-border);
+      border-radius: var(--admin-radius-control);
       position: relative;
 
       .title-container {
@@ -948,14 +948,14 @@ onBeforeRouteLeave(async (_, __, next) => {
         outline: none;
         font-size: 16px;
         font-weight: 500;
-        color: #303133;
+        color: var(--admin-text);
         background: transparent;
         padding: 8px 36px 8px 12px;
         border-radius: 4px;
         transition: background-color 0.2s;
 
         &::placeholder {
-          color: #c0c4cc;
+          color: var(--admin-text-muted);
           font-weight: 400;
         }
       }
@@ -1011,7 +1011,7 @@ onBeforeRouteLeave(async (_, __, next) => {
 
     .el-form-item__label {
       font-weight: 500;
-      color: #303133;
+      color: var(--admin-text);
       margin-bottom: 8px;
       font-size: 14px;
     }
@@ -1027,7 +1027,7 @@ onBeforeRouteLeave(async (_, __, next) => {
       gap: 12px;
       margin-bottom: 8px;
       font-weight: 500;
-      color: #303133;
+      color: var(--admin-text);
 
       .ai-generate-icon {
         font-size: 14px;
@@ -1081,12 +1081,12 @@ onBeforeRouteLeave(async (_, __, next) => {
   .drawer-footer {
     margin-top: 16px;
     padding-top: 24px;
-    border-top: 1px solid #e4e7ed;
+    border-top: 1px solid var(--admin-border);
   }
 
   // 加载状态优化
   :deep(.el-loading-mask) {
-    background-color: rgba(255, 255, 255, 0.8);
+    background-color: rgba(14, 14, 14, 0.78);
     backdrop-filter: blur(4px);
   }
 
@@ -1112,9 +1112,9 @@ onBeforeRouteLeave(async (_, __, next) => {
 
         :deep(.el-input-group__prepend) {
           padding: 0 12px;
-          background-color: #f5f7fa;
-          border-color: #dcdfe6;
-          color: #606266;
+          background-color: var(--admin-surface-soft);
+          border-color: var(--admin-border);
+          color: var(--admin-text-secondary);
           font-size: 13px;
         }
       }

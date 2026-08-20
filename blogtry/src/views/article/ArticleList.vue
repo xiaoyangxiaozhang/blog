@@ -56,7 +56,7 @@
       <template #default="{ row }">
         <div style="display: flex; align-items: center; justify-content: center; gap: 12px; font-size: 13px;">
           <div style="display: flex; align-items: center; gap: 4px;">
-            <el-icon size="14" style="color: #409eff;">
+            <el-icon size="14" style="color: var(--admin-brand);">
               <View />
             </el-icon>
             <span>{{ row.view_count || 0 }}</span>
@@ -82,7 +82,7 @@
           </div>
           <div v-if="row.update_time && row.update_time !== row.publish_time"
             style="display: flex; align-items: center; justify-content: center; gap: 4px;">
-            <el-icon size="13" style="color: #409eff;">
+            <el-icon size="13" style="color: var(--admin-brand);">
               <EditPen />
             </el-icon>
             <span>{{ formatDateTime(row.update_time) }}</span>
@@ -341,15 +341,15 @@ onMounted(async () => {
   align-items: center;
   gap: 16px;
   padding: 16px;
-  border: 1px solid #e4e7ed;
-  border-radius: 8px;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-control);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .export-option:hover {
-  border-color: #409eff;
-  background: #f5f7fa;
+  border-color: var(--admin-brand);
+  background: var(--admin-brand-soft);
 }
 
 .export-option.disabled {
@@ -363,20 +363,20 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f0f9eb;
-  border-radius: 8px;
+  background: rgba(103, 194, 58, 0.12);
+  border-radius: var(--admin-radius-control);
   font-size: 20px;
   color: #67c23a;
 }
 
 .export-option:nth-child(1) .option-icon {
-  background: #e6f7e6;
+  background: rgba(7, 193, 96, 0.14);
   color: #07c160;
 }
 
 .export-option:nth-child(2) .option-icon {
-  background: #f4f4f5;
-  color: #909399;
+  background: var(--admin-surface-soft);
+  color: var(--admin-text-muted);
 }
 
 .option-content {
@@ -386,12 +386,12 @@ onMounted(async () => {
 .option-title {
   font-size: 15px;
   font-weight: 500;
-  color: #303133;
+  color: var(--admin-text);
   margin-bottom: 4px;
 }
 
 .option-desc {
   font-size: 12px;
-  color: #909399;
+  color: var(--admin-text-muted);
 }
 </style>

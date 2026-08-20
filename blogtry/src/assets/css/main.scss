@@ -1,4 +1,83 @@
-/* 重置样式 */
+/* BlogNuxt admin visual system: shared with the public site */
+:root {
+  color-scheme: dark;
+
+  --admin-bg: #0e0e0e;
+  --admin-surface: #171717;
+  --admin-surface-elevated: #1e1e1e;
+  --admin-surface-soft: #151515;
+  --admin-text: #ffffff;
+  --admin-text-secondary: #cccccc;
+  --admin-text-muted: #999999;
+  --admin-brand: #8183ff;
+  --admin-brand-hover: #6b6de6;
+  --admin-brand-soft: rgba(129, 131, 255, 0.12);
+  --admin-border: rgba(255, 255, 255, 0.1);
+  --admin-border-soft: rgba(255, 255, 255, 0.06);
+  --admin-shadow: 0 18px 40px rgba(0, 0, 0, 0.32);
+  --admin-radius-card: 15px;
+  --admin-radius-control: 10px;
+  --admin-radius-pill: 999px;
+
+  --el-color-primary: var(--admin-brand);
+  --el-color-primary-light-3: #a6a7ff;
+  --el-color-primary-light-5: #bfc0ff;
+  --el-color-primary-light-7: #d6d7ff;
+  --el-color-primary-light-8: #e5e5ff;
+  --el-color-primary-light-9: rgba(129, 131, 255, 0.14);
+  --el-color-primary-dark-2: var(--admin-brand-hover);
+  --el-bg-color: var(--admin-surface);
+  --el-bg-color-page: var(--admin-bg);
+  --el-bg-color-overlay: var(--admin-surface-elevated);
+  --el-text-color-primary: var(--admin-text);
+  --el-text-color-regular: var(--admin-text-secondary);
+  --el-text-color-secondary: var(--admin-text-muted);
+  --el-text-color-placeholder: #737373;
+  --el-border-color: var(--admin-border);
+  --el-border-color-light: var(--admin-border-soft);
+  --el-border-color-lighter: rgba(255, 255, 255, 0.04);
+  --el-fill-color: var(--admin-surface-soft);
+  --el-fill-color-light: rgba(255, 255, 255, 0.06);
+  --el-fill-color-lighter: rgba(255, 255, 255, 0.04);
+  --el-fill-color-blank: var(--admin-surface);
+}
+
+/* The public site offers a light theme; keeping the same token names makes the
+   admin ready for a future switch without changing component styles. */
+:root[data-admin-theme='light'] {
+  color-scheme: light;
+  --admin-bg: #ffffff;
+  --admin-surface: #ffffff;
+  --admin-surface-elevated: #ffffff;
+  --admin-surface-soft: #f8fafc;
+  --admin-text: #111111;
+  --admin-text-secondary: #555555;
+  --admin-text-muted: #666666;
+  --admin-brand: #3b82f6;
+  --admin-brand-hover: #2563eb;
+  --admin-brand-soft: rgba(59, 130, 246, 0.08);
+  --admin-border: rgba(0, 0, 0, 0.12);
+  --admin-border-soft: rgba(0, 0, 0, 0.08);
+  --admin-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+  --el-color-primary: var(--admin-brand);
+  --el-color-primary-light-9: rgba(59, 130, 246, 0.08);
+  --el-color-primary-dark-2: var(--admin-brand-hover);
+  --el-bg-color: var(--admin-surface);
+  --el-bg-color-page: var(--admin-bg);
+  --el-bg-color-overlay: var(--admin-surface-elevated);
+  --el-text-color-primary: var(--admin-text);
+  --el-text-color-regular: var(--admin-text-secondary);
+  --el-text-color-secondary: var(--admin-text-muted);
+  --el-text-color-placeholder: #94a3b8;
+  --el-border-color: var(--admin-border);
+  --el-border-color-light: var(--admin-border-soft);
+  --el-border-color-lighter: rgba(0, 0, 0, 0.04);
+  --el-fill-color: var(--admin-surface-soft);
+  --el-fill-color-light: rgba(0, 0, 0, 0.04);
+  --el-fill-color-lighter: rgba(0, 0, 0, 0.02);
+  --el-fill-color-blank: var(--admin-surface);
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -8,6 +87,13 @@
 html, body {
   height: 100%;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: var(--admin-bg);
+  color: var(--admin-text);
+}
+
+body {
+  min-width: 320px;
+  transition: background-color 250ms ease, color 250ms ease;
 }
 
 /* 自定义滚动条样式 */
@@ -17,27 +103,118 @@ html, body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--admin-bg);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #ccc;
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #999;
+  background: var(--admin-brand);
 }
 
 /* Element Plus 样式覆盖 */
 .el-card {
-  --el-card-padding: 16px;
+  --el-card-padding: 22px;
+  --el-card-bg-color: var(--admin-surface);
+  --el-card-border-color: var(--admin-border);
+  color: var(--admin-text);
+  border-radius: var(--admin-radius-card);
+  box-shadow: none;
+  transition: background-color 250ms ease, border-color 250ms ease, box-shadow 250ms ease;
+
+  &:hover {
+    border-color: var(--admin-brand-soft);
+    box-shadow: var(--admin-shadow);
+  }
 }
 
 .el-table {
-  --el-table-border-color: #ebeef5;
-  --el-table-header-background-color: #f5f7fa;
+  --el-table-border-color: var(--admin-border);
+  --el-table-header-background-color: var(--admin-surface-soft);
+  --el-table-tr-bg-color: var(--admin-surface);
+  --el-table-row-hover-bg-color: var(--admin-brand-soft);
+  --el-table-bg-color: var(--admin-surface);
+  --el-table-text-color: var(--admin-text-secondary);
+  --el-table-header-text-color: var(--admin-text);
+  border-radius: var(--admin-radius-control);
+  overflow: hidden;
+}
+
+.el-table th.el-table__cell {
+  font-weight: 600;
+}
+
+.el-button {
+  border-radius: var(--admin-radius-control);
+  transition: background-color 200ms ease, border-color 200ms ease, color 200ms ease, box-shadow 200ms ease;
+
+  &.el-button--primary {
+    --el-button-bg-color: var(--admin-brand);
+    --el-button-border-color: var(--admin-brand);
+    --el-button-hover-bg-color: var(--admin-brand-hover);
+    --el-button-hover-border-color: var(--admin-brand-hover);
+    --el-button-active-bg-color: var(--admin-brand-hover);
+    --el-button-active-border-color: var(--admin-brand-hover);
+    --el-button-text-color: #ffffff;
+  }
+}
+
+.el-input__wrapper,
+.el-textarea__inner,
+.el-select__wrapper,
+.el-date-editor.el-input__wrapper {
+  border-radius: var(--admin-radius-control);
+  background: var(--admin-surface-soft);
+  box-shadow: 0 0 0 1px var(--admin-border) inset;
+  transition: box-shadow 200ms ease, background-color 200ms ease;
+}
+
+.el-input__wrapper.is-focus,
+.el-input__wrapper:focus-within,
+.el-textarea__inner:focus,
+.el-select__wrapper.is-focused,
+.el-date-editor.el-input__wrapper.is-focus {
+  box-shadow: 0 0 0 1px var(--admin-brand) inset, 0 0 0 3px var(--admin-brand-soft);
+}
+
+.el-dialog {
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-card);
+  background: var(--admin-surface-elevated);
+  box-shadow: var(--admin-shadow);
+}
+
+.el-dialog__header,
+.el-dialog__body,
+.el-dialog__footer {
+  color: var(--admin-text);
+}
+
+.el-popper,
+.el-dropdown-menu {
+  border-color: var(--admin-border);
+  background: var(--admin-surface-elevated);
+}
+
+.el-dropdown-menu__item {
+  color: var(--admin-text-secondary);
+
+  &:hover {
+    background: var(--admin-brand-soft);
+    color: var(--admin-text);
+  }
+}
+
+.el-pagination {
+  --el-pagination-bg-color: transparent;
+  --el-pagination-text-color: var(--admin-text-secondary);
+  --el-pagination-button-color: var(--admin-text-secondary);
+  --el-pagination-button-bg-color: var(--admin-surface-soft);
+  --el-pagination-hover-color: var(--admin-brand);
 }
 
 /* 修复表格中图片列的省略号问题 */
@@ -48,4 +225,3 @@ html, body {
     text-overflow: clip;
   }
 }
-

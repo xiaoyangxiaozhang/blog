@@ -266,7 +266,7 @@
   <el-dialog v-model="tagDialogVisible" title="分类标签" width="400px">
     <div class="tags-form">
       <el-input v-model="formData.content.tags" placeholder="输入标签名称" maxlength="20" show-word-limit />
-      <div style="margin-top: 12px; font-size: 12px; color: #999;">
+      <div style="margin-top: 12px; font-size: 12px; color: var(--admin-text-muted);">
         输入一个标签，如：日常、学习、技术等
       </div>
     </div>
@@ -276,7 +276,7 @@
   <el-dialog v-model="locationDialogVisible" title="发布位置" width="400px">
     <div class="location-form">
       <el-input v-model="formData.content.location" placeholder="输入位置信息" maxlength="100" show-word-limit />
-      <div style="margin-top: 12px; font-size: 12px; color: #999;">
+      <div style="margin-top: 12px; font-size: 12px; color: var(--admin-text-muted);">
         可以输入具体地址、城市或地标名称
       </div>
     </div>
@@ -287,7 +287,7 @@
     <div class="time-form">
       <el-date-picker v-model="publishTime" type="datetime" placeholder="选择发布时间" format="YYYY-MM-DD HH:mm"
         value-format="YYYY-MM-DD HH:mm:ss" style="width: 100%;" />
-      <div style="margin-top: 12px; font-size: 12px; color: #999;">
+      <div style="margin-top: 12px; font-size: 12px; color: var(--admin-text-muted);">
         设置动态显示的发布时间，不设置则使用当前时间
       </div>
     </div>
@@ -434,7 +434,7 @@ const handleImageError = (e: Event) => {
   parent.style.display = 'flex'
   parent.style.alignItems = 'center'
   parent.style.justifyContent = 'center'
-  parent.innerHTML = '<span style="color: #c0c4cc; font-size: 12px;">加载失败</span>'
+  parent.innerHTML = '<span style="color: var(--admin-text-muted); font-size: 12px;">加载失败</span>'
 }
 // 上传本地图片
 const handleImageUpload = () => {
@@ -749,7 +749,7 @@ const handleSubmit = async () => {
     display: flex;
     gap: 12px;
     padding: 16px 0;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--admin-border);
     margin-bottom: 16px;
   }
 
@@ -783,8 +783,7 @@ const handleSubmit = async () => {
       height: 100px;
       border-radius: 4px;
       overflow: hidden;
-      border: 1px solid #e4e7ed;
-
+      border: 1px solid var(--admin-border);
       img {
         width: 100%;
         height: 100%;
@@ -807,8 +806,8 @@ const handleSubmit = async () => {
   .content-preview {
     margin-bottom: 16px;
     padding: 12px;
-    background-color: #f8f9fa;
-    border-radius: 8px;
+    background-color: var(--admin-surface-soft);
+    border-radius: var(--admin-radius-control);
 
     >div {
       display: flex;
@@ -841,10 +840,10 @@ const handleSubmit = async () => {
           display: flex;
           align-items: center;
           justify-content: center;
-          background-color: #e4e7ed;
+          background-color: var(--admin-border);
           border-radius: 4px;
           font-size: 24px;
-          color: #909399;
+          color: var(--admin-text-muted);
         }
       }
 
@@ -861,7 +860,7 @@ const handleSubmit = async () => {
         .preview-url,
         .preview-artist {
           font-size: 12px;
-          color: #999;
+          color: var(--admin-text-muted);
         }
       }
 
@@ -921,7 +920,7 @@ const handleSubmit = async () => {
     justify-content: space-between;
     align-items: center;
     padding-top: 16px;
-    border-top: 1px solid #f0f0f0;
+    border-top: 1px solid var(--admin-border);
 
     .el-button.active {
       color: var(--el-color-primary);
@@ -954,9 +953,9 @@ const handleSubmit = async () => {
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid #e4e7ed;
+    border: 1px solid var(--admin-border);
     border-radius: 6px;
-    background-color: #fafafa;
+    background-color: var(--admin-surface-soft);
     flex-shrink: 0;
 
     img {
@@ -968,7 +967,7 @@ const handleSubmit = async () => {
 
     span {
       font-size: 10px;
-      color: #c0c4cc;
+      color: var(--admin-text-muted);
       text-align: center;
     }
   }
@@ -985,8 +984,8 @@ const handleSubmit = async () => {
     align-items: center;
     gap: 12px;
     padding: 12px;
-    background-color: #f8f9fa;
-    border-radius: 8px;
+    background-color: var(--admin-surface-soft);
+    border-radius: var(--admin-radius-control);
 
     .music-preview-cover {
       width: 60px;
@@ -1007,7 +1006,7 @@ const handleSubmit = async () => {
 
       .music-preview-artist {
         font-size: 12px;
-        color: #999;
+        color: var(--admin-text-muted);
       }
     }
   }

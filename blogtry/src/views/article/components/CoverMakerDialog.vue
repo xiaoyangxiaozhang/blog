@@ -738,7 +738,7 @@ onUnmounted(() => {
 .editor-main {
   flex: 1;
   display: flex;
-  background: #f8f9fa;
+  background: var(--admin-surface-soft);
   height: 0;
 }
 
@@ -892,7 +892,7 @@ onUnmounted(() => {
 .canvas-container {
   width: 100%;
   aspect-ratio: 16 / 9;
-  background: #f8f9fa;
+  background: var(--admin-surface-soft);
   border-radius: 8px;
   position: relative;
   overflow: hidden;

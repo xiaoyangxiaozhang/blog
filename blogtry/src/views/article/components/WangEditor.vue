@@ -1,6 +1,6 @@
 <template>
   <div class="wangeditor-container">
-    <div ref="editorRef" style="height: 500px; border: 1px solid #e4e7ed"></div>
+    <div ref="editorRef" style="height: 500px; border: 1px solid var(--admin-border)"></div>
   </div>
 </template>
 

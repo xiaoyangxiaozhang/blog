@@ -1178,8 +1178,8 @@ onBeforeUnmount(() => {
   flex-direction: column;
   width: 100%;
   height: 100%;
-  background: #fff;
-  border-radius: 4px;
+  background: var(--admin-surface);
+  border-radius: var(--admin-radius-control);
   overflow: hidden;
 
   &.is-fullscreen {
@@ -1196,8 +1196,8 @@ onBeforeUnmount(() => {
     align-items: center;
     gap: 4px;
     padding: 4px 10px;
-    background: #f5f7fa;
-    border-bottom: 1px solid #e4e7ed;
+    background: var(--admin-surface-soft);
+    border-bottom: 1px solid var(--admin-border);
     flex-wrap: wrap;
 
     .toolbar-btn {
@@ -1209,8 +1209,8 @@ onBeforeUnmount(() => {
       padding: 0 6px;
       background: transparent;
       border: none;
-      border-radius: 4px;
-      color: #606266;
+      border-radius: 8px;
+      color: var(--admin-text-secondary);
       cursor: pointer;
       font-size: 13px;
       font-weight: 600;
@@ -1221,12 +1221,12 @@ onBeforeUnmount(() => {
       }
 
       &:hover {
-        background: #e4e7ed;
-        color: #409eff;
+        background: var(--admin-brand-soft);
+        color: var(--admin-brand);
       }
 
       &.active {
-        background: #409eff;
+        background: var(--admin-brand);
         color: #fff;
       }
 
@@ -1242,7 +1242,7 @@ onBeforeUnmount(() => {
     .toolbar-divider {
       width: 1px;
       height: 16px;
-      background: #dcdfe6;
+      background: var(--admin-border);
       margin: 0 4px;
     }
 
@@ -1261,7 +1261,7 @@ onBeforeUnmount(() => {
     .editor-pane {
       flex: 1;
       overflow: auto;
-      border-right: 1px solid #e4e7ed;
+      border-right: 1px solid var(--admin-border);
       cursor: text;
       display: flex;
       flex-direction: column;
@@ -1306,7 +1306,7 @@ onBeforeUnmount(() => {
         }
 
         .cm-cursor {
-          border-left-color: #409eff;
+          border-left-color: var(--admin-brand);
         }
 
         .cm-selectionBackground {
@@ -1314,12 +1314,12 @@ onBeforeUnmount(() => {
         }
 
         .cm-activeLine {
-          background: #f5f7fa;
+          background: var(--admin-brand-soft);
         }
 
         .cm-gutters {
-          background: #fafafa;
-          border-right: 1px solid #e4e7ed;
+          background: var(--admin-surface-soft);
+          border-right: 1px solid var(--admin-border);
         }
       }
     }
@@ -1358,7 +1358,7 @@ onBeforeUnmount(() => {
           align-items: center;
           margin: 1.5rem 0;
           padding: 1rem;
-          background: #f5f7fa;
+          background: var(--admin-surface-soft);
           border-radius: 8px;
           overflow-x: auto;
 
@@ -1418,8 +1418,8 @@ onBeforeUnmount(() => {
       top: 0;
       bottom: 0;
       width: 260px;
-      background: #fff;
-      border-left: 1px solid #e4e7ed;
+      background: var(--admin-surface-elevated);
+      border-left: 1px solid var(--admin-border);
       display: flex;
       flex-direction: column;
       box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
@@ -1430,11 +1430,11 @@ onBeforeUnmount(() => {
         align-items: center;
         justify-content: space-between;
         padding: 12px 16px;
-        border-bottom: 1px solid #e4e7ed;
-        background: #f5f7fa;
+        border-bottom: 1px solid var(--admin-border);
+        background: var(--admin-surface-soft);
         font-weight: 600;
         font-size: 14px;
-        color: #303133;
+        color: var(--admin-text);
 
         .toc-close {
           display: flex;
@@ -1445,13 +1445,13 @@ onBeforeUnmount(() => {
           border: none;
           border-radius: 4px;
           background: transparent;
-          color: #909399;
+          color: var(--admin-text-muted);
           cursor: pointer;
           transition: all 0.2s;
 
           &:hover {
-            background: #e4e7ed;
-            color: #606266;
+            background: var(--admin-brand-soft);
+            color: var(--admin-text);
           }
 
           i {
@@ -1470,14 +1470,14 @@ onBeforeUnmount(() => {
           cursor: pointer;
           font-size: 14px;
           line-height: 1.5;
-          color: #606266;
+          color: var(--admin-text-secondary);
           border-left: 3px solid transparent;
           transition: all 0.2s;
 
           &:hover {
-            background: #f5f7fa;
-            color: #409eff;
-            border-left-color: #409eff;
+            background: var(--admin-brand-soft);
+            color: var(--admin-brand);
+            border-left-color: var(--admin-brand);
           }
 
           @for $i from 1 through 6 {
@@ -1494,7 +1494,7 @@ onBeforeUnmount(() => {
         .toc-empty {
           padding: 40px 16px;
           text-align: center;
-          color: #909399;
+          color: var(--admin-text-muted);
           font-size: 14px;
         }
       }
@@ -1506,10 +1506,10 @@ onBeforeUnmount(() => {
     align-items: center;
     justify-content: space-between;
     padding: 4px 12px;
-    background: #fafafa;
-    border-top: 1px solid #e4e7ed;
+    background: var(--admin-surface-soft);
+    border-top: 1px solid var(--admin-border);
     font-size: 12px;
-    color: #909399;
+    color: var(--admin-text-muted);
 
     .footer-left {
       display: flex;
@@ -1597,7 +1597,7 @@ onBeforeUnmount(() => {
 .emoji-tip {
   padding: 40px 20px;
   text-align: center;
-  color: #909399;
+  color: var(--admin-text-muted);
   font-size: 0.85rem;
 }
 
@@ -1609,7 +1609,7 @@ onBeforeUnmount(() => {
 
 .emoji-bar {
   display: flex;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--admin-border);
   flex-shrink: 0;
 }
 
@@ -1618,16 +1618,16 @@ onBeforeUnmount(() => {
   padding: 8px 4px;
   border: none;
   background: transparent;
-  color: #666;
+  color: var(--admin-text-secondary);
   font-size: 0.75rem;
   cursor: pointer;
 
   &:hover {
-    background: #f5f5f5;
+    background: var(--admin-brand-soft);
   }
 
   &.active {
-    color: #409eff;
+    color: var(--admin-brand);
   }
 }
 
@@ -1676,7 +1676,7 @@ onBeforeUnmount(() => {
   }
 
   &:hover {
-    background: #f0f0f0;
+    background: var(--admin-brand-soft);
   }
 
   .emoji-text & {

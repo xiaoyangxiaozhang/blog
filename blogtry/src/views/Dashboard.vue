@@ -312,7 +312,17 @@ let pieChart: echarts.ECharts | null = null
 let tagCloud: echarts.ECharts | null = null
 let calendarChart: echarts.ECharts | null = null
 
-const CHART_COLORS = ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272', '#fc8452', '#9a60b4', '#ea7ccc']
+const CHART_COLORS = ['#8183ff', '#49b1f5', '#67c23a', '#e6a23c', '#f56c6c', '#a78bfa', '#22d3ee', '#fb7185', '#34d399']
+
+const chartTheme = () => {
+  const light = document.documentElement.getAttribute('data-theme') === 'blue-white'
+  return {
+    text: light ? '#555555' : '#cccccc',
+    muted: light ? '#666666' : '#999999',
+    grid: light ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.08)',
+    surface: light ? '#ffffff' : '#171717'
+  }
+}
 
 const greeting = computed(() => {
   const hour = new Date().getHours()
@@ -449,16 +459,19 @@ const renderTrendChart=()=>{
 
     const pvData = allDates.map(date => dataMap.get(date)?.pv || 0)
     const uvData = allDates.map(date => dataMap.get(date)?.uv || 0)
-    const option = {
+  const option = {
+    textStyle: { color: chartTheme().text },
     tooltip: {
       trigger: 'axis',
+      textStyle: { color: chartTheme().text },
       axisPointer: {
         type: 'cross'
       }
     },
     legend: {
       data: ['浏览量', '访客量'],
-      bottom: 0
+      bottom: 0,
+      textStyle: { color: chartTheme().text }
     },
     grid: {
       left: '3%',
@@ -470,24 +483,26 @@ const renderTrendChart=()=>{
     xAxis: {
       type: 'category',
       boundaryGap: false,
-      data: allDates
+      data: allDates,
+      axisLabel: { color: chartTheme().muted },
+      axisLine: { lineStyle: { color: chartTheme().grid } }
     },
     yAxis: [
       {
         type: 'value',
         name: '浏览量',
         position: 'left',
-        axisLabel: {
-          formatter: '{value}'
-        }
+        axisLabel: { color: chartTheme().muted, formatter: '{value}' },
+        axisLine: { lineStyle: { color: chartTheme().grid } },
+        splitLine: { lineStyle: { color: chartTheme().grid } }
       },
       {
         type: 'value',
         name: '访客量',
         position: 'right',
-        axisLabel: {
-          formatter: '{value}'
-        }
+        axisLabel: { color: chartTheme().muted, formatter: '{value}' },
+        axisLine: { lineStyle: { color: chartTheme().grid } },
+        splitLine: { show: false }
       }
     ],
     series: [
@@ -498,7 +513,7 @@ const renderTrendChart=()=>{
         yAxisIndex: 0,
         data: pvData,
         itemStyle: {
-          color: '#7c7cff'
+          color: '#8183ff'
         },
         lineStyle: {
           width: 2
@@ -512,7 +527,7 @@ const renderTrendChart=()=>{
         yAxisIndex: 1,
         data: uvData,
         itemStyle: {
-          color: '#409eff'
+          color: '#49b1f5'
         },
         lineStyle: {
           width: 2
@@ -537,6 +552,7 @@ const fetchCategoryData = async () => {
   if (!pieChart) return
 
   const option = {
+    textStyle: { color: chartTheme().text },
     tooltip: {
       trigger: 'item',
       formatter: '{a} <br/>{b}: {c} ({d}%)'
@@ -545,9 +561,7 @@ const fetchCategoryData = async () => {
       orient: 'vertical',
       right: 10,
       top: 'center',
-      textStyle: {
-        fontSize: 12
-      },
+      textStyle: { fontSize: 12, color: chartTheme().text },
       formatter: (name: string) => {
         const item = categoryData.value.find(d => d.name === name)
         return `${name} (${item?.count || 0})`
@@ -562,7 +576,7 @@ const fetchCategoryData = async () => {
         avoidLabelOverlap: false,
         itemStyle: {
           borderRadius: 10,
-          borderColor: '#fff',
+          borderColor: chartTheme().surface,
           borderWidth: 2
         },
         label: {
@@ -574,6 +588,7 @@ const fetchCategoryData = async () => {
             show: true,
             fontSize: 18,
             fontWeight: 'bold',
+            color: chartTheme().text,
             formatter: '{b}\n{c}篇'
           }
         },
@@ -605,6 +620,7 @@ const renderTagCloud = () => {
   if (!tagCloud) return
 
   const option = {
+    textStyle: { color: chartTheme().text },
     tooltip: {
       formatter: '{b}: {c}篇'
     },
@@ -661,6 +677,7 @@ const renderCalendarChart = () => {
     : 1
 
   const option = {
+    textStyle: { color: chartTheme().text },
     tooltip: {
       position: 'top',
       formatter: (params: any) => {
@@ -673,7 +690,8 @@ const renderCalendarChart = () => {
       calculable: true,
       orient: 'horizontal',
       left: 'center',
-      top: 20
+      top: 20,
+      textStyle: { color: chartTheme().text }
     },
     calendar: {
       range: selectedYear.value,
@@ -684,11 +702,13 @@ const renderCalendarChart = () => {
       cellSize: 12,
       monthLabel: {
         fontSize: 11,
-        nameMap: 'cn'
+        nameMap: 'cn',
+        color: chartTheme().muted
       },
       dayLabel: {
         fontSize: 11,
-        nameMap: 'cn'
+        nameMap: 'cn',
+        color: chartTheme().muted
       }
     },
     series: {
@@ -701,9 +721,19 @@ const renderCalendarChart = () => {
   // 使用 notMerge: true 确保完全替换配置
   calendarChart.setOption(option, { notMerge: true })
 }
+
+const handleThemeChange = () => {
+  window.requestAnimationFrame(() => {
+    renderTrendChart()
+    renderPieChart()
+    renderTagCloud()
+    renderCalendarChart()
+  })
+}
 onMounted(async () => {
   // 清除缓存的用户信息，强制从后端获取
   authStore.clearUserInfo()
+  window.addEventListener('admin-theme-change', handleThemeChange)
   // 先获取用户信息
   await authStore.fetchUserInfo()
   await fetchDashboardData()
@@ -720,6 +750,7 @@ onMounted(async () => {
   }, 100)
 })
 onUnmounted(() => {
+  window.removeEventListener('admin-theme-change', handleThemeChange)
   window.removeEventListener('resize', handleResize)
   if (resizeTimer) clearTimeout(resizeTimer)
 
@@ -739,7 +770,7 @@ onUnmounted(() => {
   // 顶部区域
   .top-card {
     margin-bottom: 10px;
-    border-radius: 20px !important;
+    border-radius: var(--admin-radius-card) !important;
     :deep(.el-card__body) {
       padding: 24px;
     }
@@ -766,13 +797,13 @@ onUnmounted(() => {
           .greeting {
             font-size: 18px;
             font-weight: 600;
-            color: #303133;
+            color: var(--admin-text);
             margin: 0 0 8px 0;
           }
 
           .weather-info {
             font-size: 14px;
-            color: #909399;
+            color: var(--admin-text-muted);
             margin: 0;
           }
         }
@@ -789,21 +820,21 @@ onUnmounted(() => {
 
           .stat-label {
             font-size: 14px;
-            color: #909399;
+            color: var(--admin-text-muted);
             margin-bottom: 8px;
           }
 
           .stat-value {
             font-size: 28px;
             font-weight: bold;
-            color: #303133;
+            color: var(--admin-text);
           }
         }
 
         .stat-divider {
           width: 1px;
           height: 40px;
-          background-color: #e4e7ed;
+          background-color: var(--admin-border);
         }
       }
     }
@@ -817,7 +848,7 @@ onUnmounted(() => {
 
     .overview-card {
       transition: all 0.3s;
-      border-radius: 20px !important;
+      border-radius: var(--admin-radius-card) !important;
       :deep(.el-card__body) {
         padding: 16px;
         display: flex;
@@ -837,22 +868,22 @@ onUnmounted(() => {
           flex-shrink: 0;
 
           &.icon-purple {
-            background-color: #f0f0ff;
-            color: #7c7cff;
+            background-color: var(--admin-brand-soft);
+            color: var(--admin-brand);
           }
 
           &.icon-blue {
-            background-color: #e8f4ff;
-            color: #409eff;
+            background-color: rgba(73, 177, 245, 0.12);
+            color: #49b1f5;
           }
 
           &.icon-green {
-            background-color: #e8f8f0;
+            background-color: rgba(103, 194, 58, 0.12);
             color: #67c23a;
           }
 
           &.icon-orange {
-            background-color: #fff3e0;
+            background-color: rgba(230, 162, 60, 0.12);
             color: #e6a23c;
           }
         }
@@ -864,14 +895,14 @@ onUnmounted(() => {
 
         .card-title {
           font-size: 13px;
-          color: #909399;
+          color: var(--admin-text-muted);
           margin-bottom: 4px;
         }
 
         .card-value {
           font-size: 24px;
           font-weight: bold;
-          color: #303133;
+          color: var(--admin-text);
           line-height: 1.2;
           margin-bottom: 4px;
         }
@@ -883,7 +914,7 @@ onUnmounted(() => {
           font-size: 12px;
 
           .today-value {
-            color: #909399;
+            color: var(--admin-text-muted);
           }
 
           .growth-rate {
@@ -892,16 +923,18 @@ onUnmounted(() => {
             gap: 2px;
             font-weight: 600;
 
-            &.positive {
+            &.positive,
+            &.growth-up {
               color: #67c23a;
             }
 
-            &.negative {
+            &.negative,
+            &.growth-down {
               color: #f56c6c;
             }
 
             &.neutral {
-              color: #909399;
+              color: var(--admin-text-muted);
             }
 
             .el-icon {
@@ -935,13 +968,13 @@ onUnmounted(() => {
       min-height: 300px;
     }
 
-    .empty-placeholder {
+      .empty-placeholder {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       height: 100%;
-      color: #909399;
+      color: var(--admin-text-muted);
 
       p {
         margin-top: 16px;
@@ -977,8 +1010,9 @@ onUnmounted(() => {
 
         .link-item {
           padding: 16px 20px;
-          background: #f5f7fa;
-          border-radius: 8px;
+          background: var(--admin-surface-soft);
+          border: 1px solid var(--admin-border-soft);
+          border-radius: var(--admin-radius-control);
           display: flex;
           justify-content: space-between;
           align-items: center;
@@ -986,18 +1020,18 @@ onUnmounted(() => {
           transition: background 0.2s;
 
           &:hover {
-            background: #e8ecf1;
+            background: var(--admin-brand-soft);
           }
 
           .link-text {
             font-size: 15px;
             font-weight: 500;
-            color: #303133;
+            color: var(--admin-text-secondary);
           }
 
           .link-icon {
             font-size: 16px;
-            color: #909399;
+            color: var(--admin-text-muted);
           }
         }
       }
@@ -1022,7 +1056,7 @@ onUnmounted(() => {
 
     // 禁用移动端的 hover 效果
     :deep(.el-card.is-hover-shadow:hover) {
-      box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+      box-shadow: none;
     }
 
     .top-card {

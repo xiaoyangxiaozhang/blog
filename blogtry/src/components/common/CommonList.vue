@@ -161,6 +161,7 @@ watch(
         height: 100%;
         display: flex;
         flex-direction: column;
+        border-radius: var(--admin-radius-card);
 
         .el-card__body {
             flex: 1;
@@ -178,13 +179,15 @@ watch(
 
         h2 {
             margin: 0;
-            font-size: 20px;
-            font-weight: 500;
+            color: var(--admin-text);
+            font-size: 21px;
+            font-weight: 600;
+            letter-spacing: -0.01em;
         }
 
-        .actions {
-            display: flex;
-            gap: 12px;
+            .actions {
+                display: flex;
+                gap: 10px;
 
             :deep(.el-button + .el-button) {
                 margin-left: 0;
@@ -218,6 +221,7 @@ watch(
     min-height: 200px; // 保证虚拟表格有最小高度
         :deep(.el-table__header th .cell) {
             text-align: center;
+            color: var(--admin-text-secondary);
         }
     }
 

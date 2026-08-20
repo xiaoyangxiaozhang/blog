@@ -344,9 +344,9 @@ const handleClose = () => {
   align-items: center;
   padding: 16px;
   margin-bottom: 20px;
-  background-color: #f5f7fa;
+  background-color: var(--admin-surface-soft);
   border-radius: 4px;
-  border: 1px solid #e4e7ed;
+  border: 1px solid var(--admin-border);
 
   .info-item {
     display: flex;
@@ -358,12 +358,12 @@ const handleClose = () => {
 
     .info-label {
       font-size: 12px;
-      color: #909399;
+      color: var(--admin-text-muted);
     }
 
     .info-value {
       font-size: 14px;
-      color: #303133;
+      color: var(--admin-text);
       font-weight: 500;
     }
   }
@@ -382,12 +382,12 @@ const handleClose = () => {
   .icon-preview {
     width: 40px;
     height: 40px;
-    border: 1px solid #e4e7ed;
+    border: 1px solid var(--admin-border);
     border-radius: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #f5f7fa;
+    background-color: var(--admin-surface-soft);
     flex-shrink: 0;
 
     img {
@@ -398,7 +398,7 @@ const handleClose = () => {
 
     i {
       font-size: 24px;
-      color: #606266;
+      color: var(--admin-text-secondary);
     }
   }
 }
