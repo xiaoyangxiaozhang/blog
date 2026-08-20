@@ -1,0 +1,74 @@
+name: Deploy blog admin
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: blog-admin-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.19.0
+          cache: npm
+          cache-dependency-path: blogtry/package-lock.json
+
+      - name: Install dependencies
+        working-directory: blogtry
+        run: npm ci
+
+      - name: Build admin frontend
+        working-directory: blogtry
+        run: npm run build
+
+      - name: Configure SSH
+        env:
+          SSH_KEY: ${{ secrets.ALIYUN_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.ALIYUN_KNOWN_HOSTS }}
+        run: |
+          set -Eeuo pipefail
+          : "${SSH_KEY:?请配置 ALIYUN_SSH_KEY}"
+          : "${KNOWN_HOSTS:?请配置 ALIYUN_KNOWN_HOSTS}"
+          install -d -m 700 "$HOME/.ssh"
+          printf '%s\n' "$SSH_KEY" > "$HOME/.ssh/id_ed25519"
+          printf '%s\n' "$KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/id_ed25519"
+          chmod 644 "$HOME/.ssh/known_hosts"
+
+      - name: Upload admin frontend
+        env:
+          ALIYUN_HOST: ${{ secrets.ALIYUN_HOST }}
+          ALIYUN_USER: ${{ secrets.ALIYUN_USER }}
+          DEPLOY_PATH: /www/wwwroot/blogtry
+        run: |
+          set -Eeuo pipefail
+          : "${ALIYUN_HOST:?请配置 ALIYUN_HOST}"
+          : "${ALIYUN_USER:?请配置 ALIYUN_USER}"
+
+          rsync -az --delete \
+            --exclude='.well-known/' \
+            --exclude='.user.ini' \
+            blogtry/dist/ \
+            "$ALIYUN_USER@$ALIYUN_HOST:$DEPLOY_PATH/"
+
+      - name: Check admin website
+        run: |
+          curl --fail --silent --show-error \
+            --max-time 15 \
+            https://admin.xiaoyangxiaozhang.xyz/ \
+            >/dev/null
