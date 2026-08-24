@@ -2,7 +2,7 @@
   <div>
   <div class="sidebar" :class="{ 'is-collapse': isCollapse }">
     <div class="logo">
-      <span class="logo-mark" aria-hidden="true">羊</span>
+      <img class="logo-mark" src="/favicon.png" alt="" aria-hidden="true" />
       <span v-show="!isCollapse" class="logo-label">小羊管理系统</span>
     </div>
     <el-menu class="admin-menu" :default-active="route.path" :collapse="isCollapse" background-color="transparent"
@@ -119,15 +119,10 @@ const handleMenuSelect = () => {
     .logo-mark {
       width: 34px;
       height: 34px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
+      display: block;
       flex: 0 0 34px;
-      border-radius: var(--admin-radius-pill);
-      background: var(--admin-brand);
-      color: #ffffff;
-      font-size: 17px;
-      font-weight: 600;
+      object-fit: cover;
+      border-radius: var(--admin-radius-control);
       box-shadow: 0 0 24px var(--admin-brand-soft);
     }
 
