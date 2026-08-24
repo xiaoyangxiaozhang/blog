@@ -1,8 +1,9 @@
 <template>
   <div class="image-uploader">
     <div class="uploader-container" :style="{ width, height }">
-      <el-upload class="uploader-box" :show-file-list="false" :http-request="handleUpload" accept="image/*" :disabled="disabled">
-        <img v-if="imageUrl" :src="imageUrl" class="preview-image" />
+      <el-upload class="uploader-box" :show-file-list="false" :http-request="handleUpload" :accept="accept" :disabled="disabled">
+        <video v-if="imageUrl && isVideoPreview" :src="imageUrl" class="preview-media" muted loop autoplay playsinline />
+        <img v-else-if="imageUrl" :src="imageUrl" class="preview-image" />
         <div v-else class="upload-placeholder">
           <el-icon :size="40">
             <Plus />
@@ -31,13 +32,15 @@ export interface ImageUploaderProps {
   width?: string // 宽度
   height?: string // 高度
   disabled?: boolean
+  allowVideo?: boolean // 是否允许上传视频并预览视频
 }
 
 const props = withDefaults(defineProps<ImageUploaderProps>(), {
   uploadType: '图片',
   width: '120px',
   height: '120px',
-  disabled: false
+  disabled: false,
+  allowVideo: false
 })
 
 const emit = defineEmits<{
@@ -46,6 +49,12 @@ const emit = defineEmits<{
 
 const pendingFile = ref<File | null>(null) // 待上传的文件
 const previewUrl = ref<string>('') // 本地预览 URL
+
+const accept = computed(() => props.allowVideo ? 'image/*,video/*' : 'image/*')
+const isVideoPreview = computed(() => {
+  if (pendingFile.value?.type.startsWith('video/')) return true
+  return /\.(mp4|webm|ogg|mov|m4v)(?:$|[?#])/i.test(props.modelValue || '')
+})
 
 // 图片 URL（本地预览或已上传）
 const imageUrl = computed(() => {
@@ -63,8 +72,9 @@ const handleUpload = async (options: UploadRequestOptions): Promise<void> => {
   const file = options.file as File
 
   // 验证文件类型
-  if (!file.type.startsWith('image/')) {
-    ElMessage.error('请选择图片文件')
+  const isAllowed = file.type.startsWith('image/') || (props.allowVideo && file.type.startsWith('video/'))
+  if (!isAllowed) {
+    ElMessage.error(props.allowVideo ? '请选择图片或视频文件' : '请选择图片文件')
     return Promise.reject()
   }
 
@@ -200,6 +210,13 @@ defineExpose({
       display: block;
     }
 
+    .preview-media {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
     .upload-placeholder {
       display: flex;
       flex-direction: column;
@@ -211,4 +228,3 @@ defineExpose({
   }
 }
 </style>
-

@@ -35,9 +35,11 @@
           height="120px" :disabled="loading" />
       </el-form-item>
 
-      <el-form-item label="背景图片">
+      <el-form-item label="背景图片/视频">
         <ImageUploader ref="backgroundUploaderRef" v-model="form.background_image" upload-type="博客背景" width="213px"
-          height="120px" :disabled="loading" />
+          height="120px" :disabled="loading" allow-video />
+        <el-input v-model="form.background_image" placeholder="可直接填写图片或视频地址（mp4/webm/ogg）" :disabled="loading"
+          class="background-url-input" clearable />
       </el-form-item>
 
       <el-form-item label="站点截图">
@@ -376,6 +378,12 @@ defineExpose({
     .el-form-item {
       margin-bottom: 22px;
     }
+  }
+
+  .background-url-input {
+    display: block;
+    width: 280px;
+    margin-top: 8px;
   }
 }
 
