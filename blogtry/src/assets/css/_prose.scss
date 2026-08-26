@@ -3,7 +3,8 @@
 
 // 亮色主题（默认）
 :root,
-[data-theme="light"] {
+[data-theme="light"],
+[data-theme="blue-white"] {
   // 文本颜色
   --prose-text: #4c4948;
   --prose-heading: #2c3e50;
@@ -84,7 +85,8 @@
 }
 
 // 暗色主题
-[data-theme="dark"] {
+[data-theme="dark"],
+[data-theme="midnight-blue"] {
   // 文本颜色
   --prose-text: #ffffffb3;
   --prose-heading: #e0e0e0;

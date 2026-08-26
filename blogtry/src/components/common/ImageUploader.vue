@@ -16,6 +16,15 @@
           <Delete />
         </el-icon>
       </div>
+
+      <div v-if="uploading || uploadError" class="upload-progress" @click.stop>
+        <div class="upload-progress-track">
+          <div class="upload-progress-bar" :style="{ width: `${uploadProgress}%` }" />
+        </div>
+        <span v-if="uploadError" class="upload-progress-error">上传失败</span>
+        <span v-else>上传中 {{ uploadProgress }}%</span>
+        <button v-if="uploadError" type="button" class="retry-upload" @click="retryUpload">重试</button>
+      </div>
     </div>
   </div>
 </template>
@@ -24,7 +33,7 @@
 import { ref, computed } from 'vue'
 import { ElMessage, type UploadRequestOptions } from 'element-plus'
 import { Plus, Delete } from '@element-plus/icons-vue'
-import { uploadFile } from '@/api/file'
+import { uploadFile, type UploadProgress } from '@/api/file'
 
 export interface ImageUploaderProps {
   modelValue?: string // 图片 URL
@@ -49,6 +58,9 @@ const emit = defineEmits<{
 
 const pendingFile = ref<File | null>(null) // 待上传的文件
 const previewUrl = ref<string>('') // 本地预览 URL
+const uploading = ref(false)
+const uploadProgress = ref(0)
+const uploadError = ref(false)
 
 const accept = computed(() => props.allowVideo ? 'image/*,video/*' : 'image/*')
 const isVideoPreview = computed(() => {
@@ -86,6 +98,8 @@ const handleUpload = async (options: UploadRequestOptions): Promise<void> => {
   // 保存文件和创建本地预览
   pendingFile.value = file
   previewUrl.value = URL.createObjectURL(file)
+  uploadError.value = false
+  uploadProgress.value = 0
 
   return Promise.resolve()
 }
@@ -100,17 +114,27 @@ const handleDelete = () => {
     previewUrl.value = ''
   }
   pendingFile.value = null
+  uploading.value = false
+  uploadError.value = false
+  uploadProgress.value = 0
   emit('update:modelValue', '')
+}
+
+const handleProgress = (progress: UploadProgress) => {
+  uploadProgress.value = progress.percentage
 }
 
 // 暴露上传方法供父组件调用
 const uploadPendingFile = async (): Promise<string | null> => {
   if (props.disabled || !pendingFile.value) return null
 
+  uploading.value = true
+  uploadError.value = false
+  uploadProgress.value = 0
+  const loading = ElMessage.info({ message: '正在上传...', duration: 0 })
   try {
-    const loading = ElMessage.info({ message: '正在上传...', duration: 0 })
-    const result = await uploadFile(pendingFile.value, props.uploadType)
-    loading.close()
+    const result = await uploadFile(pendingFile.value, props.uploadType, { onProgress: handleProgress })
+    uploadProgress.value = 100
 
     // 清理本地预览
     if (previewUrl.value) {
@@ -123,9 +147,17 @@ const uploadPendingFile = async (): Promise<string | null> => {
     emit('update:modelValue', result.file_url)
     return result.file_url
   } catch (error: any) {
+    uploadError.value = true
     ElMessage.error(error.message || '上传失败')
     throw error
+  } finally {
+    loading.close()
+    uploading.value = false
   }
+}
+
+const retryUpload = () => {
+  void uploadPendingFile().catch(() => undefined)
 }
 
 // 获取待上传文件数量
@@ -178,6 +210,48 @@ defineExpose({
         background: rgba(245, 108, 108, 0.9);
         transform: scale(1.1);
       }
+    }
+
+    .upload-progress {
+      position: absolute;
+      right: 6px;
+      bottom: 6px;
+      left: 6px;
+      z-index: 12;
+      padding: 7px 8px;
+      color: #fff;
+      font-size: 12px;
+      background: rgba(0, 0, 0, 0.72);
+      border-radius: 4px;
+    }
+
+    .upload-progress-track {
+      width: 100%;
+      height: 4px;
+      margin-bottom: 5px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 4px;
+    }
+
+    .upload-progress-bar {
+      height: 100%;
+      background: var(--el-color-primary);
+      transition: width 0.15s ease;
+    }
+
+    .upload-progress-error {
+      color: #fca5a5;
+    }
+
+    .retry-upload {
+      margin-left: 8px;
+      padding: 0;
+      color: #93c5fd;
+      font-size: 12px;
+      background: transparent;
+      border: 0;
+      cursor: pointer;
     }
   }
 

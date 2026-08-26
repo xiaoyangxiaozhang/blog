@@ -151,7 +151,7 @@ onMounted(() => {
   .text-content {
     margin-bottom: 8px;
     line-height: 1.5;
-    color: #333;
+    color: var(--admin-text-secondary);
   }
 
   .images-content {
@@ -160,7 +160,7 @@ onMounted(() => {
     margin-bottom: 8px;
 
     .more-images {
-      color: #666;
+      color: var(--admin-text-muted);
       font-size: 12px;
     }
   }
