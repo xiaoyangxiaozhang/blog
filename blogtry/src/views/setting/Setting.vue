@@ -39,6 +39,10 @@
           <AISettingsTab v-model:form="aiForm" :loading="loading || !canEditSettings" />
         </el-tab-pane>
 
+        <el-tab-pane label="聊天机器人" name="chatbot">
+          <ChatbotSettingsTab v-model:form="chatbotForm" :loading="loading || !canEditSettings" />
+        </el-tab-pane>
+
         <!-- OAuth 配置标签页 -->
         <el-tab-pane label="OAuth 配置" name="oauth">
           <OAuthSettingsTab v-model:form="oauthForm" :loading="loading || !canEditSettings" />
@@ -69,12 +73,15 @@ import BlogSettingsTab from './components/BlogSettingsTab.vue'
 import NotificationSettingsTab from './components/NotificationSettingsTab.vue'
 import UploadSettingsTab from './components/UploadSettingsTab.vue'
 import AISettingsTab from './components/AISettingsTab.vue'
+import ChatbotSettingsTab from './components/ChatbotSettingsTab.vue'
 import OAuthSettingsTab from './components/OAuthSettingsTab.vue'
 import WeChatSettingsTab from './components/WeChatSettingsTab.vue'
 import ImportExportTab from './components/ImportExportTab.vue'
 import type { SettingGroupType } from '@/types/sysconfig'
 import type { NotificationForm } from './components/NotificationSettingsTab.vue'
 import type { UploadForm } from './components/UploadSettingsTab.vue'
+import type { ChatbotForm } from '@/types/chatbot'
+import { getChatbotConfig, updateChatbotConfig } from '@/api/chatbot'
 
 // 页面状态
 const activeTab = ref('basic')
@@ -177,6 +184,32 @@ const aiForm = ref({
   summary_prompt: '',
   ai_summary_prompt: '',
   title_prompt: ''
+})
+
+const chatbotForm = ref<ChatbotForm>({
+  enabled: false,
+  display_name: '',
+  avatar: '',
+  welcome: '',
+  identity_notice: '',
+  base_url: '',
+  api_key: '',
+  api_key_configured: false,
+  api_key_hint: '',
+  model: '',
+  temperature: 0.7,
+  tone: '',
+  suggestionsList: [],
+  catchphrasesList: [],
+  avoidPhrasesList: [],
+  boundaries: '',
+  dialogueExamples: [],
+  knowledge_enabled: true,
+  max_history: 8,
+  per_minute_limit: 5,
+  per_day_limit: 20,
+  global_daily_limit: 300,
+  clear_api_key: false
 })
 
 // OAuth 配置表单
@@ -371,6 +404,51 @@ const loadAIConfigs = async () => {
   }
 }
 
+// 加载聊天机器人配置
+const loadChatbotConfigs = async () => {
+  try {
+    const configs = await getChatbotConfig()
+    const parseList = (value: string) => parseJSON<unknown[]>(value, [])
+      .map((item) => typeof item === 'string' ? { value: item } : item)
+      .filter((item): item is { value: string } => Boolean(
+        item && typeof item === 'object' && 'value' in item && typeof item.value === 'string'
+      ))
+
+    Object.assign(chatbotForm.value, {
+      enabled: configs.enabled === 'true',
+      display_name: configs.display_name || '',
+      avatar: configs.avatar || '',
+      welcome: configs.welcome || '',
+      identity_notice: configs.identity_notice || '',
+      base_url: configs.base_url || '',
+      api_key: '',
+      api_key_configured: configs.api_key_configured === 'true',
+      api_key_hint: configs.api_key_hint || '',
+      model: configs.model || '',
+      temperature: Number(configs.temperature || 0.7),
+      tone: configs.tone || '',
+      suggestionsList: parseList(configs.suggestions || ''),
+      catchphrasesList: parseList(configs.catchphrases || ''),
+      avoidPhrasesList: parseList(configs.avoid_phrases || ''),
+      boundaries: configs.boundaries || '',
+      dialogueExamples: parseJSON<unknown[]>(configs.dialogue_examples || '', [])
+        .filter((item): item is { question: string; answer: string } => Boolean(
+          item && typeof item === 'object' &&
+          'question' in item && typeof item.question === 'string' &&
+          'answer' in item && typeof item.answer === 'string'
+        )),
+      knowledge_enabled: configs.knowledge_enabled !== 'false',
+      max_history: Number(configs.max_history || 8),
+      per_minute_limit: Number(configs.per_minute_limit || 5),
+      per_day_limit: Number(configs.per_day_limit || 20),
+      global_daily_limit: Number(configs.global_daily_limit || 300),
+      clear_api_key: false
+    })
+  } catch {
+    ElMessage.error('获取聊天机器人配置失败')
+  }
+}
+
 // 加载 OAuth 配置
 const loadOAuthConfigs = async () => {
   try {
@@ -422,6 +500,7 @@ const loadAllConfigs = async () => {
       loadNotificationConfigs(),
       loadUploadConfigs(),
       loadAIConfigs(),
+      loadChatbotConfigs(),
       loadOAuthConfigs(),
       loadWeChatConfigs()
     ])
@@ -557,6 +636,36 @@ const handleSave = async () => {
       'ai.title_prompt': aiForm.value.title_prompt
     }
 
+    // 聊天机器人配置（与 AI 摘要、标题配置独立）
+    const chatbotPayload: Record<string, string> = {
+      enabled: chatbotForm.value.enabled ? 'true' : 'false',
+      display_name: chatbotForm.value.display_name,
+      avatar: chatbotForm.value.avatar,
+      welcome: chatbotForm.value.welcome,
+      identity_notice: chatbotForm.value.identity_notice,
+      base_url: chatbotForm.value.base_url,
+      model: chatbotForm.value.model,
+      temperature: String(chatbotForm.value.temperature),
+      tone: chatbotForm.value.tone,
+      suggestions: JSON.stringify(chatbotForm.value.suggestionsList.map(item => item.value).filter(Boolean)),
+      catchphrases: JSON.stringify(chatbotForm.value.catchphrasesList.map(item => item.value).filter(Boolean)),
+      avoid_phrases: JSON.stringify(chatbotForm.value.avoidPhrasesList.map(item => item.value).filter(Boolean)),
+      boundaries: chatbotForm.value.boundaries,
+      dialogue_examples: JSON.stringify(chatbotForm.value.dialogueExamples
+        .map(item => ({ question: item.question.trim(), answer: item.answer.trim() }))
+        .filter(item => item.question && item.answer)),
+      knowledge_enabled: chatbotForm.value.knowledge_enabled ? 'true' : 'false',
+      max_history: String(chatbotForm.value.max_history),
+      per_minute_limit: String(chatbotForm.value.per_minute_limit),
+      per_day_limit: String(chatbotForm.value.per_day_limit),
+      global_daily_limit: String(chatbotForm.value.global_daily_limit)
+    }
+    if (chatbotForm.value.api_key.trim()) {
+      chatbotPayload.api_key = chatbotForm.value.api_key.trim()
+    } else if (chatbotForm.value.clear_api_key) {
+      chatbotPayload.clear_api_key = 'true'
+    }
+
     // OAuth 配置
     const oauthPayload: Record<string, string> = {
       'oauth.github.enabled': oauthForm.value['github.enabled'],
@@ -591,6 +700,7 @@ const handleSave = async () => {
       updateSettingGroup('notification', notificationPayload),
       updateSettingGroup('upload', uploadPayload),
       updateSettingGroup('ai', aiPayload),
+      updateChatbotConfig(chatbotPayload),
       updateSettingGroup('oauth', oauthPayload),
       updateSettingGroup('wechat', wechatPayload)
     ]
@@ -613,6 +723,7 @@ const validTabs = new Set<SettingGroupType | 'import-export'>([
   'notification',
   'upload',
   'ai',
+  'chatbot',
   'oauth',
   'wechat',
   'import-export'
