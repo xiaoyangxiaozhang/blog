@@ -99,6 +99,7 @@ blog/
 1. 使用 Node.js 22.19.0 安装依赖并构建 `blogtry`
 2. 将 `blogtry/dist/` 同步到服务器 `/www/wwwroot/blogtry`
 3. 检查后台地址 <https://admin.xiaoyangxiaozhang.xyz/>
+4. 发布成功后在本次提交上创建递增的 Git tag，例如 `v1.0.0`、`v1.0.1`
 
 部署需要在 GitHub Actions Secrets 中配置：`ALIYUN_HOST`、`ALIYUN_USER`、`ALIYUN_SSH_KEY` 和 `ALIYUN_KNOWN_HOSTS`。请勿把私钥直接提交到仓库。
 
@@ -106,4 +107,3 @@ blog/
 
 - 前台博客：[blognuxt](https://github.com/xiaoyangxiaozhang/blognuxt)
 - 前台线上地址：<https://xiaoyangxiaozhang.xyz/>
-
