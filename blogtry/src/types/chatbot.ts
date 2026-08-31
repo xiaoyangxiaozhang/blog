@@ -8,7 +8,6 @@ export interface ChatbotForm {
   display_name: string
   avatar: string
   welcome: string
-  identity_notice: string
   base_url: string
   api_key: string
   api_key_configured: boolean

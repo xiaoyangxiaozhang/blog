@@ -1,7 +1,7 @@
 <template>
   <el-form :model="form" label-width="125px" class="setting-form chatbot-form">
     <el-alert
-      title="这是博主的 AI 数字分身。它会使用关于页资料、已发布文章和下方语气样本进行第一人称交流。"
+      title="这是博主的聊天助手。它会使用关于页资料、已发布文章和下方语气样本，用博主的第一人称交流。"
       type="info"
       :closable="false"
       show-icon
@@ -9,7 +9,7 @@
 
     <el-divider content-position="left">基础形象</el-divider>
 
-    <el-form-item label="启用数字分身">
+    <el-form-item label="启用聊天助手">
       <el-switch v-model="form.enabled" :disabled="loading" />
     </el-form-item>
 
@@ -23,10 +23,6 @@
 
     <el-form-item label="欢迎语">
       <el-input v-model="form.welcome" type="textarea" :rows="3" :disabled="loading" />
-    </el-form-item>
-
-    <el-form-item label="身份说明">
-      <el-input v-model="form.identity_notice" type="textarea" :rows="2" :disabled="loading" />
     </el-form-item>
 
     <el-divider content-position="left">独立模型配置</el-divider>
@@ -65,7 +61,7 @@
 
     <el-form-item label="保存后试聊">
       <div class="preview-box">
-        <el-input v-model="previewQuestion" placeholder="先保存配置，再输入一句话测试数字分身" :disabled="loading || previewing" />
+        <el-input v-model="previewQuestion" placeholder="先保存配置，再输入一句话试聊" :disabled="loading || previewing" />
         <el-button :loading="previewing" :disabled="loading || !previewQuestion.trim()" @click="preview">发送</el-button>
         <div v-if="previewReply" class="preview-reply">{{ previewReply }}</div>
       </div>
