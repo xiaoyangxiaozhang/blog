@@ -90,6 +90,30 @@
         height="120px" :disabled="loading" />
     </el-form-item>
 
+    <el-divider content-position="left">关于页 3D 模型</el-divider>
+
+    <el-form-item label="启用模型">
+      <el-switch v-model="form.about_model_enabled" :disabled="loading" />
+    </el-form-item>
+
+    <el-form-item label="模型地址">
+      <el-input v-model="form.about_model_url" placeholder="/models/cat/scene.gltf、/models/robot/scene.glb 或完整 URL"
+        :disabled="loading" clearable />
+    </el-form-item>
+
+    <el-form-item label="模型署名">
+      <el-input v-model="form.about_model_credit" placeholder="仅用于无障碍提示和版权记录，不会显示在页面底部"
+        :disabled="loading" clearable />
+    </el-form-item>
+
+    <el-form-item label="交互设置">
+      <div class="model-options">
+        <el-checkbox v-model="form.about_model_rotate" :disabled="loading">自动旋转</el-checkbox>
+        <el-checkbox v-model="form.about_model_control" :disabled="loading">允许拖拽</el-checkbox>
+        <el-checkbox v-model="form.about_model_zoom" :disabled="loading">允许缩放</el-checkbox>
+      </div>
+    </el-form-item>
+
     <el-form-item label="个人资料">
       <JsonListEditor v-model="form.profileList" :fields="profileFields" :disabled="loading" hide-controls />
     </el-form-item>
@@ -252,6 +276,12 @@ interface BlogFormData {
   about_describe: string
   about_describe_tips: string
   about_exhibition: string
+  about_model_enabled: boolean
+  about_model_url: string
+  about_model_credit: string
+  about_model_rotate: boolean
+  about_model_control: boolean
+  about_model_zoom: boolean
   profileList: Array<{ label: string; value: string; color: string }>
   about_personality: string
   mottoMainList: string[]
@@ -390,6 +420,12 @@ defineExpose({
 .motto-inputs {
   display: flex;
   gap: 8px;
+}
+
+.model-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 // 移动端适配
