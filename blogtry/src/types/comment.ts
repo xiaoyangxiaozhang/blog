@@ -27,6 +27,12 @@ export interface CommentListData {
     page_size: number
 }
 
+export interface CommentQuery {
+    page: number
+    page_size: number
+    is_deleted?: boolean
+}
+
 // 评论导入相关类型
 export interface ImportCommentError {
     index: number
@@ -41,4 +47,3 @@ export interface ImportCommentsResult {
     user_created: number
     errors?: ImportCommentError[]
 }
-

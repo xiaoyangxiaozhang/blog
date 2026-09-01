@@ -11,6 +11,21 @@
     @update:page="handlePageChange"
     @update:pageSize="handlePageSizeChange"
   >
+    <template #extra>
+      <el-tabs v-model="activeTab" class="comment-tabs" @tab-change="handleTabChange">
+        <el-tab-pane name="active">
+          <template #label>
+            <span class="comment-tab-label">正常评论</span>
+          </template>
+        </el-tab-pane>
+        <el-tab-pane name="trash">
+          <template #label>
+            <span class="comment-tab-label"><el-icon><Delete /></el-icon>回收站</span>
+          </template>
+        </el-tab-pane>
+      </el-tabs>
+    </template>
+
     <el-table-column label="用户信息" width="180" align="center">
       <template #default="{ row }">
         <div style="display: flex; align-items: center; gap: 8px">
@@ -71,6 +86,7 @@
           inline-prompt
           active-text="显示"
           inactive-text="隐藏"
+          :disabled="Boolean(row.deleted_at)"
           @change="handleStatusChange(row)"
         />
       </template>
@@ -134,18 +150,18 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { User } from '@element-plus/icons-vue'
+import { Delete, User } from '@element-plus/icons-vue'
 import CommonList from '@/components/common/CommonList.vue'
 import { useLatestRequest } from '@/composables/useLatestRequest'
-import type { Comment } from '@/types/comment'
-import type { PaginationQuery } from '@/types/request'
+import type { Comment, CommentQuery } from '@/types/comment'
 import { getComments, deleteComment, restoreComment, toggleCommentStatus, createComment } from '@/api/comment'
 import { formatDateTime } from '@/utils/date'
 
 const loading = ref(false)
 const commentList = ref<Comment[]>([])
 const total = ref(0)
-const queryParams = ref<PaginationQuery>({ page: 1, page_size: 20 })
+const activeTab = ref<'active' | 'trash'>('active')
+const queryParams = ref<CommentQuery>({ page: 1, page_size: 20, is_deleted: false })
 
 const replyDialogVisible = ref(false)
 const replying = ref(false)
@@ -185,6 +201,13 @@ const handlePageChange = (page: number) => {
 
 const handlePageSizeChange = (pageSize: number) => {
   queryParams.value.page_size = pageSize
+  queryParams.value.page = 1
+  fetchComments()
+}
+
+const handleTabChange = (tab: string | number) => {
+  activeTab.value = tab === 'trash' ? 'trash' : 'active'
+  queryParams.value.is_deleted = activeTab.value === 'trash'
   queryParams.value.page = 1
   fetchComments()
 }
@@ -275,6 +298,20 @@ onMounted(fetchComments)
 </script>
 
 <style scoped lang="scss">
+.comment-tabs {
+  margin-bottom: 12px;
+
+  :deep(.el-tabs__header) {
+    margin-bottom: 0;
+  }
+}
+
+.comment-tab-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .reply-info {
   padding: 12px;
   background-color: var(--admin-surface-soft);
