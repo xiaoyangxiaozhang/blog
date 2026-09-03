@@ -88,7 +88,7 @@
             <!-- 左侧：上传器/预览 -->
             <div class="cover-left">
               <ImageUploader ref="coverUploaderRef" v-model="formData.cover" upload-type="文章封面" width="285px"
-                height="160px" />
+                height="160px" crop />
             </div>
 
             <!-- 右侧：在线图片输入和制作封面 -->
