@@ -65,6 +65,12 @@ export interface UserListData {
     page_size: number
 }
 
+export interface UserListQuery {
+    page: number
+    page_size: number
+    is_deleted?: boolean
+}
+
 // 刷新Token响应
 export interface RefreshTokenResponse {
     access_token: string

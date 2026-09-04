@@ -1,6 +1,5 @@
 import request from "@/utils/request";
-import type { LoginParams, LoginResponse, User, UserListData, ResetPasswordRequest, CreateUserRequest, UpdateUserRequest, RefreshTokenResponse } from "@/types/user";
-import type { PaginationQuery } from "@/types/request";
+import type { LoginParams, LoginResponse, User, UserListData, UserListQuery, ResetPasswordRequest, CreateUserRequest, UpdateUserRequest, RefreshTokenResponse } from "@/types/user";
 
 /**
  * 用户登录
@@ -40,7 +39,7 @@ export function logout(): Promise<void> {
  * @param params 查询参数
  * @returns Promise<UserListData>
  */
-export function getUsers(params: PaginationQuery): Promise<UserListData> {
+export function getUsers(params: UserListQuery): Promise<UserListData> {
   return request.get("/admin/users", { params });
 }
 
@@ -59,7 +58,16 @@ export function getUserById(id: number): Promise<User> {
  * @returns Promise<void>
  */
 export function deleteUser(id: number): Promise<void> {
-  return request.delete(`/admin/users/${id}`);
+    return request.delete(`/admin/users/${id}`);
+}
+
+/**
+ * 恢复已删除的用户
+ * @param id 用户ID
+ * @returns Promise<void>
+ */
+export function restoreUser(id: number): Promise<void> {
+    return request.put(`/admin/users/${id}/restore`);
 }
 
 /**

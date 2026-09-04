@@ -1,7 +1,25 @@
 <template>
-  <common-list title="用户列表" :data="userList" :loading="loading" :total="total" v-model:page="queryParams.page"
+  <common-list title="用户列表" :data="userList" :loading="loading" :total="total" :show-create="activeTab === 'active'" v-model:page="queryParams.page"
     v-model:page-size="queryParams.page_size" create-text="新增用户" @create="handleCreate" @refresh="fetchUsers"
-    @update:page="fetchUsers" @update:pageSize="fetchUsers">
+    @update:page="handlePageChange" @update:pageSize="handlePageSizeChange">
+    <template #extra>
+      <el-tabs v-model="activeTab" class="user-tabs" @tab-change="handleTabChange">
+        <el-tab-pane name="active">
+          <template #label>
+            <span class="user-tab-label">正常用户</span>
+          </template>
+        </el-tab-pane>
+        <el-tab-pane name="trash">
+          <template #label>
+            <span class="user-tab-label"><el-icon><Delete /></el-icon>回收站</span>
+          </template>
+        </el-tab-pane>
+      </el-tabs>
+
+      <!-- 用户表单对话框 -->
+      <user-form-dialog v-model="dialogVisible" :edit-user="currentUser" @success="fetchUsers" />
+    </template>
+
     <!-- 表格列 -->
     <el-table-column label="头像" width="100" align="center">
       <template #default="{ row }">
@@ -84,29 +102,26 @@
 
     <el-table-column label="操作" width="180" align="center" fixed="right">
       <template #default="{ row }">
-        <template v-if="!row.deleted_at && canOperateUser(row)">
+        <template v-if="activeTab === 'active' && canOperateUser(row)">
           <el-button type="primary" link size="small" @click="handleEdit(row)">编辑</el-button>
           <el-button type="danger" link size="small" @click="handleDelete(row.id)">删除</el-button>
         </template>
+        <el-button v-else-if="activeTab === 'trash' && canOperateUser(row)" type="success" link size="small"
+          @click="handleRestore(row.id)">恢复</el-button>
       </template>
     </el-table-column>
 
-    <!-- 额外内容 -->
-    <template #extra>
-      <!-- 用户表单对话框 -->
-      <user-form-dialog v-model="dialogVisible" :edit-user="currentUser" @success="fetchUsers" />
-    </template>
   </common-list>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { User } from '@element-plus/icons-vue'
+import { Delete, User } from '@element-plus/icons-vue'
 import CommonList from '@/components/common/CommonList.vue'
 import type { User as UserType } from '@/types/user'
-import { getUsers, deleteUser } from '@/api/user'
-import type { PaginationQuery } from '@/types/request'
+import { getUsers, deleteUser, restoreUser } from '@/api/user'
+import type { UserListQuery } from '@/types/user'
 import UserFormDialog from './components/UserFormDialog.vue'
 import { formatDateTime } from '@/utils/date'
 import { useAuthStore } from '@/stores/auth'
@@ -115,7 +130,8 @@ const userStore = useAuthStore()
 const loading = ref(false)
 const userList = ref<UserType[]>([])
 const total = ref(0)
-const queryParams = ref<PaginationQuery>({ page: 1, page_size: 20 })
+const activeTab = ref<'active' | 'trash'>('active')
+const queryParams = ref<UserListQuery>({ page: 1, page_size: 20, is_deleted: false })
 
 // 对话框相关
 const dialogVisible = ref(false)
@@ -140,6 +156,24 @@ const fetchUsers = async () => {
   }
 }
 
+const handlePageChange = (page: number) => {
+  queryParams.value.page = page
+  fetchUsers()
+}
+
+const handlePageSizeChange = (pageSize: number) => {
+  queryParams.value.page_size = pageSize
+  queryParams.value.page = 1
+  fetchUsers()
+}
+
+const handleTabChange = (tab: string | number) => {
+  activeTab.value = tab === 'trash' ? 'trash' : 'active'
+  queryParams.value.is_deleted = activeTab.value === 'trash'
+  queryParams.value.page = 1
+  fetchUsers()
+}
+
 const handleCreate = () => {
   currentUser.value = null
   dialogVisible.value = true
@@ -159,6 +193,17 @@ const handleDelete = async (id: number) => {
     await ElMessageBox.confirm('确定要删除这个用户吗？', '提示', { type: 'warning' })
     await deleteUser(id)
     ElMessage.success('删除成功')
+    fetchUsers()
+  } catch (error) {
+    if (error !== 'cancel' && error instanceof Error) ElMessage.error(error.message)
+  }
+}
+
+const handleRestore = async (id: number) => {
+  try {
+    await ElMessageBox.confirm('确定要恢复这个用户吗？', '提示', { type: 'info' })
+    await restoreUser(id)
+    ElMessage.success('恢复成功')
     fetchUsers()
   } catch (error) {
     if (error !== 'cancel' && error instanceof Error) ElMessage.error(error.message)
