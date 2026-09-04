@@ -56,7 +56,7 @@
                 </template>
                 <template v-else>
                   <div class="upload-section">
-                    <el-upload :auto-upload="false" :show-file-list="false" accept="image/*,.dng,.tif,.tiff"
+                    <el-upload :auto-upload="false" :show-file-list="false" accept="image/*"
                       :on-change="handleImageUpload" drag>
                       <div class="upload-area">
                         <el-icon class="upload-icon">
@@ -87,7 +87,7 @@
                   <p>上传图片开始创作</p>
                 </div>
                 <div v-else class="image-canvas" ref="canvasRef" :style="canvasStyle">
-                  <img ref="baseImageRef" :src="imageUrl" crossorigin="anonymous" alt="" class="base-image" />
+                  <img :src="imageUrl" alt="" class="base-image" />
                   <div class="image-overlay" :style="{ opacity: overlayOpacity / 100 }"></div>
                   <div v-if="isDragging" class="guide-lines">
                     <div class="guide-line vertical-center"></div>
@@ -151,7 +151,6 @@
 import { ref, computed, watch, nextTick, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Close, Plus, Picture, Search, Loading } from '@element-plus/icons-vue'
-import { prepareImageFile } from '@/api/file'
 
 interface TextElement {
   text: string
@@ -204,8 +203,6 @@ const currentPage = ref(1)
 const perPage = ref(20)
 const imageUrl = ref('')
 const imageLoaded = ref(false)
-const baseImageRef = ref<HTMLImageElement>()
-const localImageUrl = ref('')
 const overlayOpacity = ref(60)
 
 const textElements = ref({
@@ -273,13 +270,6 @@ const IMAGE_API_URL = 'https://pixhub.flec.top'
 function handleClose() {
   visible.value = false
   emit('update:modelValue', false)
-}
-
-function releaseLocalImage() {
-  if (localImageUrl.value) {
-    URL.revokeObjectURL(localImageUrl.value)
-    localImageUrl.value = ''
-  }
 }
 
 function handleAvatarUpload(file: File) {
@@ -472,56 +462,19 @@ async function loadMorePhotos() {
 }
 
 function selectPhoto(photo: PlatformPhoto) {
-  releaseLocalImage()
   selectedPhoto.value = photo
   imageUrl.value = photo.url || ''
   imageLoaded.value = true
 }
 
-async function handleImageUpload(file: any) {
-  const sourceFile = file.raw as File | undefined
-  if (!sourceFile) return
-
-  try {
-    const preparedFile = await prepareImageFile(sourceFile)
-    releaseLocalImage()
-    localImageUrl.value = URL.createObjectURL(preparedFile)
-    imageUrl.value = localImageUrl.value
+function handleImageUpload(file: any) {
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    imageUrl.value = e.target?.result as string
     imageLoaded.value = true
     selectedPhoto.value = null
-  } catch (error: any) {
-    ElMessage.error(error.message || '无法读取图片')
   }
-}
-
-async function waitForBaseImage() {
-  const image = baseImageRef.value
-  if (!image) throw new Error('请先上传图片')
-
-  if (image.complete) {
-    if (!image.naturalWidth || !image.naturalHeight) throw new Error('无法读取图片')
-    return image
-  }
-
-  await new Promise<void>((resolve, reject) => {
-    const cleanup = () => {
-      image.removeEventListener('load', handleLoad)
-      image.removeEventListener('error', handleError)
-    }
-    const handleLoad = () => {
-      cleanup()
-      resolve()
-    }
-    const handleError = () => {
-      cleanup()
-      reject(new Error('无法读取图片'))
-    }
-    image.addEventListener('load', handleLoad, { once: true })
-    image.addEventListener('error', handleError, { once: true })
-  })
-
-  if (!image.naturalWidth || !image.naturalHeight) throw new Error('无法读取图片')
-  return image
+  reader.readAsDataURL(file.raw)
 }
 
 async function generateImageDataUrl() {
@@ -540,8 +493,15 @@ async function generateImageDataUrl() {
     canvas.height = 1080
     const ctx = canvas.getContext('2d')
     if (!ctx) throw new Error('无法创建 Canvas 上下文')
-    const img = await waitForBaseImage()
-    const imgAspect = img.naturalWidth / img.naturalHeight
+    // 预览画布现在是固定的 1920x1080，所以缩放比例是 1:1
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    await new Promise((resolve, reject) => {
+      img.onload = resolve
+      img.onerror = reject
+      img.src = imageUrl.value
+    })
+    const imgAspect = img.width / img.height
     const canvasAspect = canvas.width / canvas.height
     let drawWidth, drawHeight, drawX, drawY
     if (imgAspect > canvasAspect) {
@@ -555,8 +515,6 @@ async function generateImageDataUrl() {
       drawX = 0
       drawY = (canvas.height - drawHeight) / 2
     }
-    ctx.fillStyle = '#ffffff'
-    ctx.fillRect(0, 0, canvas.width, canvas.height)
     ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight)
     ctx.fillStyle = `rgba(31, 41, 55, ${overlayOpacity.value / 100})`
     ctx.fillRect(0, 0, canvas.width, canvas.height)
@@ -711,7 +669,6 @@ function setupScrollListener() {
 }
 
 onUnmounted(() => {
-  releaseLocalImage()
   if (textElements.value.avatar.src && textElements.value.avatar.src.startsWith('blob:')) {
     URL.revokeObjectURL(textElements.value.avatar.src)
   }
