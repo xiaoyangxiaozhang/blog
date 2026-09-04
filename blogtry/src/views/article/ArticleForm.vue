@@ -314,12 +314,13 @@ const saveDraftSilently = async () => {
   }
 
   try {
+    const draftCover = formData.cover.startsWith('blob:') ? originalData.cover : formData.cover
     // 准备保存数据
     const saveData: any = {
       title: formData.title.trim() || `未命名草稿 ${new Date().toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}`,
       content: formData.content.trim(),
       summary: formData.summary.trim(),
-      cover: formData.cover || '',
+      cover: draftCover || '',
       category_id: formData.category_id,
       tag_ids: Array.from(formData.tag_ids || []),
       location: formData.location.trim(),
@@ -394,7 +395,7 @@ const fetchArticle = async (id: number) => {
       content: article.content,
       summary: article.summary,
       ai_summary: article.ai_summary || '',
-      cover: article.cover || '',
+      cover: article.cover?.startsWith('blob:') ? '' : (article.cover || ''),
       category_id: article.category?.id || undefined,
       tag_ids: article.tags?.map(tag => tag.id) || [],
       location: (article as any).location || '',
@@ -501,7 +502,7 @@ const handleSave = async (autoRedirect: boolean = true) => {
       content: formData.content.trim(),
       summary: formData.summary.trim(),
       ai_summary: formData.ai_summary.trim(),
-      cover: formData.cover || '',
+      cover: formData.cover.startsWith('blob:') ? (originalData.cover || '') : (formData.cover || ''),
       tag_ids: Array.from(formData.tag_ids || []),
       location: formData.location.trim(),
       is_top: formData.is_top,
