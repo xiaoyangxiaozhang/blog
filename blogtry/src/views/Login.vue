@@ -52,8 +52,8 @@ const handleLogin = async () => {
 
   loading.value = true
   try {
-    const { access_token, refresh_token } = await login(formState)
-    authStore.setTokens(access_token, refresh_token)
+    const { access_token } = await login(formState)
+    authStore.setTokens(access_token)
     await authStore.fetchUserInfo()
     ElMessage.success('登录成功')
     router.push('/')

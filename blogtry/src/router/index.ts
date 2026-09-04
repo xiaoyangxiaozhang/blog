@@ -130,6 +130,9 @@ router.beforeEach(async (to) => {
   const authStore = useAuthStore()
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
   const requiresSuperAdmin = to.matched.some(record => record.meta.requiresSuperAdmin)
+  if (!authStore.checkAuth()) {
+    await authStore.restoreSession()
+  }
   const isAuthenticated = authStore.checkAuth()
 
   if (to.path === '/login') {
@@ -147,25 +150,12 @@ router.beforeEach(async (to) => {
     return '/login'
   }
 
-  // 非阻塞式获取用户信息
   if (requiresAuth) {
-    // 先尝试从缓存获取用户信息
-    const cachedUserInfo = localStorage.getItem('user_info')
-    if (cachedUserInfo) {
-      try {
-        const user = JSON.parse(cachedUserInfo)
-        authStore.setUserInfo(user)
-      } catch (error) {
-        console.error('解析缓存的用户信息失败:', error)
-        localStorage.removeItem('user_info')
-      }
+    try {
+      await authStore.ensureUserInfo()
+    } catch {
+      return '/login'
     }
-
-    // 异步获取用户信息，不阻塞路由导航
-    authStore.ensureUserInfo().catch(() => {
-      // 获取失败时，重定向到登录页面
-      window.location.href = '/login'
-    })
   }
 
   // 如果需要超级管理员权限，必须确保用户信息已获取

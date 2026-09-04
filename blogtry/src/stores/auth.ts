@@ -9,38 +9,42 @@ const LEGACY_USER_INFO_KEY = 'userInfo'
 export const useAuthStore = defineStore('auth', () => {
   // 状态
   const currentUser = ref<User | null>(null)
+  const accessToken = ref<string | null>(null)
   const userInfoPromise = ref<Promise<User | null> | null>(null)
   const userInfoRequestId = ref(0)
   const redirectingToLogin = ref(false)
+  let refreshPromise: Promise<boolean> | null = null
+  let restorePromise: Promise<boolean> | null = null
+  let restoreAttempted = false
+
+  const clearLegacyAuthStorage = (): void => {
+    localStorage.removeItem(ACCESS_TOKEN_KEY)
+    localStorage.removeItem(REFRESH_TOKEN_KEY)
+    localStorage.removeItem(LEGACY_USER_INFO_KEY)
+    localStorage.removeItem('user_info')
+  }
   
   // 方法
   const getAccessToken = (): string | null => {
-    return localStorage.getItem(ACCESS_TOKEN_KEY)
+    return accessToken.value
   }
   
-  const getRefreshToken = (): string | null => {
-    return localStorage.getItem(REFRESH_TOKEN_KEY)
-  }
-  
-  const setTokens = (accessToken: string, refreshToken: string): void => {
-    // 登录成功后，设置accessToken和refreshToken
+  const setTokens = (token: string): void => {
     redirectingToLogin.value = false
-    localStorage.setItem(ACCESS_TOKEN_KEY, accessToken)
-    localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken)
+    restoreAttempted = true
+    accessToken.value = token
+    clearLegacyAuthStorage()
   }
   
-    // 登录成功后，设置accessToken
-  const setAccessToken = (accessToken: string): void => {
-    localStorage.setItem(ACCESS_TOKEN_KEY, accessToken)
+  const setAccessToken = (token: string): void => {
+    restoreAttempted = true
+    accessToken.value = token
+    clearLegacyAuthStorage()
   }
   
   const removeTokens = (): void => {
-    localStorage.removeItem(ACCESS_TOKEN_KEY)
-    localStorage.removeItem(REFRESH_TOKEN_KEY)
-  }
-  
-  const clearLegacyUserInfo = (): void => {
-    localStorage.removeItem(LEGACY_USER_INFO_KEY)
+    accessToken.value = null
+    clearLegacyAuthStorage()
   }
   
   const setUserInfo = (user: User | null): void => {
@@ -80,21 +84,12 @@ export const useAuthStore = defineStore('auth', () => {
       }
     }
     currentUser.value = user
-    clearLegacyUserInfo()
-    // 缓存用户信息到localStorage
-    if (user) {
-      localStorage.setItem('user_info', JSON.stringify(user))
-    } else {
-      localStorage.removeItem('user_info')
-    }
   }
   
   const clearUserInfo = (): void => {
     currentUser.value = null
     userInfoRequestId.value += 1
     userInfoPromise.value = null
-    clearLegacyUserInfo()
-    localStorage.removeItem('user_info')
   }
   
   const getUserInfo = (): User | null => {
@@ -105,18 +100,6 @@ export const useAuthStore = defineStore('auth', () => {
     if (!checkAuth()) {
       clearUserInfo()
       return null
-    }
-
-    // 先从localStorage中读取缓存的用户信息
-    const cachedUserInfo = localStorage.getItem('user_info')
-    if (cachedUserInfo) {
-      try {
-        const user = JSON.parse(cachedUserInfo)
-        setUserInfo(user)
-        return user
-      } catch (error) {
-        localStorage.removeItem('user_info')
-      }
     }
 
     if (!userInfoPromise.value) {
@@ -154,6 +137,53 @@ export const useAuthStore = defineStore('auth', () => {
   const ensureUserInfo = async (): Promise<User | null> => {
     if (currentUser.value) return currentUser.value
     return fetchUserInfo()
+  }
+
+  const refreshAccessToken = async (): Promise<boolean> => {
+    if (refreshPromise) return refreshPromise
+
+    refreshPromise = (async () => {
+      clearLegacyAuthStorage()
+      try {
+        const { refreshToken } = await import('@/api/user')
+        const data = await refreshToken()
+        setAccessToken(data.access_token)
+        return true
+      } catch {
+        accessToken.value = null
+        return false
+      } finally {
+        refreshPromise = null
+      }
+    })()
+
+    return refreshPromise
+  }
+
+  const restoreSession = async (): Promise<boolean> => {
+    if (accessToken.value) return true
+    if (restorePromise) return restorePromise
+    if (restoreAttempted) return false
+
+    restoreAttempted = true
+
+    restorePromise = (async () => {
+      try {
+        if (!await refreshAccessToken()) {
+          clearAuthState()
+          return false
+        }
+        await fetchUserInfo()
+        return true
+      } catch {
+        clearAuthState()
+        return false
+      } finally {
+        restorePromise = null
+      }
+    })()
+
+    return restorePromise
   }
   
   const getCurrentUserRole = (): string => {
@@ -196,7 +226,6 @@ export const useAuthStore = defineStore('auth', () => {
     currentUser,
     // 方法
     getAccessToken,
-    getRefreshToken,
     setTokens,
     setAccessToken,
     removeTokens,
@@ -208,6 +237,8 @@ export const useAuthStore = defineStore('auth', () => {
     getCurrentUserRole,
     isSuperAdmin,
     checkAuth,
+    refreshAccessToken,
+    restoreSession,
     clearAuthState,
     redirectToLogin,
     logout

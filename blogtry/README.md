@@ -93,9 +93,9 @@ const loadNotifications = async (reset = false) => {
 
 存 token、取 token、存用户信息、查是否登录、拉取用户信息、跳登录页、退出登录。
 
- ACCESS_TOKEN_KEY = 'access_token' // 登录凭证名字 
+ accessToken = ref<string | null>(null) // 仅保存在当前页面内存
 
-REFRESH_TOKEN_KEY = 'refresh_token' // 刷新凭证名字
+ // Refresh Token 由后端写入 HttpOnly Cookie，前端 JavaScript 不可读取
 
  currentUser = ref<User | null>(null) // 存当前登录的用户信息
 

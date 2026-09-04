@@ -1,5 +1,5 @@
 import request from "@/utils/request";
-import type { LoginParams, LoginResponse, User, UserListData, ResetPasswordRequest, CreateUserRequest, UpdateUserRequest, RefreshTokenRequest, RefreshTokenResponse } from "@/types/user";
+import type { LoginParams, LoginResponse, User, UserListData, ResetPasswordRequest, CreateUserRequest, UpdateUserRequest, RefreshTokenResponse } from "@/types/user";
 import type { PaginationQuery } from "@/types/request";
 
 /**
@@ -21,11 +21,10 @@ export function getProfile(): Promise<User> {
 
 /**
  * 刷新Token
- * @param data 刷新Token参数
  * @returns Promise<RefreshTokenResponse>
  */
-export function refreshToken(data: RefreshTokenRequest): Promise<RefreshTokenResponse> {
-  return request.post("/auth/refresh", data);
+export function refreshToken(): Promise<RefreshTokenResponse> {
+  return request.post("/auth/refresh");
 }
 
 /**

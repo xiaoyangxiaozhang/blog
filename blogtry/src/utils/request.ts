@@ -1,11 +1,6 @@
 import axios from 'axios'
 import type { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 import { useAuthStore } from '@/stores/auth'
-import { createPinia } from 'pinia'
-
-// 创建临时 pinia 实例用于工具函数中使用 store
-const pinia = createPinia()
-const authStore = useAuthStore(pinia)
 
 interface ApiResponse<T = any> {
   code: number
@@ -23,7 +18,8 @@ const getApiUrl = () => {
 const request = axios.create({
   baseURL: getApiUrl(),
   timeout: 15000,
-  headers: { 'Content-Type': 'application/json' }
+  headers: { 'Content-Type': 'application/json' },
+  withCredentials: true
 })
 
 // 是否正在刷新token的标志
@@ -48,12 +44,13 @@ const processQueue = (error: any = null) => {
 
 // 请求拦截器
 request.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  // refresh接口不需要带Authorization header（在body中发送refresh_token）
+  // refresh接口只使用HttpOnly Cookie，不带Authorization header。
   if (config.url === '/auth/refresh') {
     return config
   }
   
   // 其他接口带上access token
+  const authStore = useAuthStore()
   const token = authStore.getAccessToken()
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
@@ -75,6 +72,7 @@ request.interceptors.response.use(
   },
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
+    const authStore = useAuthStore()
     
     // 处理 blob 请求的错误响应（后端返回 JSON 错误）
     if (originalRequest.responseType === 'blob' && error.response?.data instanceof Blob) {
@@ -87,6 +85,11 @@ request.interceptors.response.use(
       }
     }
     
+    // refresh 自身失败时直接交给调用方，不能再次触发 refresh。
+    if (originalRequest.url === '/auth/refresh') {
+      return Promise.reject(error)
+    }
+
     // 处理401未授权 - 尝试刷新token
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
@@ -103,21 +106,14 @@ request.interceptors.response.use(
       originalRequest._retry = true
       isRefreshing = true
 
-      const refresh = authStore.getRefreshToken()
-      if (!refresh) {
-        // 没有refresh token，直接跳转登录页
-        authStore.redirectToLogin()
-        return Promise.reject(error)
-      }
-
       try {
-        // 调用refresh接口（返回的已经是data，不是整个response）
-        const data: { access_token: string; refresh_token: string } = await request.post('/auth/refresh', {
-          refresh_token: refresh
-        })
-        
-        // 更新token
-        authStore.setTokens(data.access_token, data.refresh_token)
+        // 清除当前失效的内存 token，再使用 HttpOnly Cookie 刷新。
+        authStore.removeTokens()
+        if (!await authStore.refreshAccessToken()) {
+          processQueue(error)
+          authStore.redirectToLogin()
+          return Promise.reject(error)
+        }
         
         // 处理队列中的请求
         processQueue()
