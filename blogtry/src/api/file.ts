@@ -46,11 +46,145 @@ const IMAGE_COMPRESSION_QUALITY = 0.82
 const COMPRESSIBLE_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
 const DEFAULT_MAX_RETRIES = 3
 const CHUNK_UPLOAD_STORAGE_PREFIX = 'blogtry:chunk-upload:'
+const TIFF_TYPE_SIZES: Record<number, number> = { 3: 2, 4: 4 }
+
+interface TiffCandidate {
+  offset: number
+  length: number
+}
+
+const getTiffInfo = (view: DataView) => {
+  if (view.byteLength < 8) return null
+
+  const littleEndian = view.getUint16(0, false) === 0x4949
+  const bigEndian = view.getUint16(0, false) === 0x4d4d
+  if ((!littleEndian && !bigEndian) || view.getUint16(2, littleEndian) !== 42) return null
+
+  return {
+    littleEndian,
+    firstIfdOffset: view.getUint32(4, littleEndian)
+  }
+}
+
+const readTiffValues = (view: DataView, entryOffset: number, type: number, count: number, littleEndian: boolean) => {
+  const typeSize = TIFF_TYPE_SIZES[type]
+  if (!typeSize || count < 1 || count > 10000) return []
+
+  const valueBytes = typeSize * count
+  let valueOffset = entryOffset + 8
+  if (valueBytes > 4) {
+    if (entryOffset + 12 > view.byteLength) return []
+    valueOffset = view.getUint32(entryOffset + 8, littleEndian)
+  }
+
+  if (valueOffset < 0 || valueOffset + valueBytes > view.byteLength) return []
+
+  return Array.from({ length: count }, (_, index) => {
+    const offset = valueOffset + index * typeSize
+    return type === 3
+      ? view.getUint16(offset, littleEndian)
+      : view.getUint32(offset, littleEndian)
+  })
+}
+
+const extractTiffPreview = (buffer: ArrayBuffer): ArrayBuffer | null => {
+  const view = new DataView(buffer)
+  const info = getTiffInfo(view)
+  if (!info) return null
+
+  const previewCandidates: TiffCandidate[] = []
+  const fallbackCandidates: TiffCandidate[] = []
+  const visited = new Set<number>()
+
+  const visitIfd = (ifdOffset: number, isPreviewIfd: boolean) => {
+    if (ifdOffset <= 0 || visited.has(ifdOffset) || ifdOffset + 2 > view.byteLength) return
+    visited.add(ifdOffset)
+
+    const entryCount = view.getUint16(ifdOffset, info.littleEndian)
+    const entriesEnd = ifdOffset + 2 + entryCount * 12
+    if (entryCount > 4096 || entriesEnd + 4 > view.byteLength) return
+
+    const values = new Map<number, number[]>()
+    const subIfdOffsets: number[] = []
+    for (let index = 0; index < entryCount; index += 1) {
+      const entryOffset = ifdOffset + 2 + index * 12
+      const tag = view.getUint16(entryOffset, info.littleEndian)
+      const type = view.getUint16(entryOffset + 2, info.littleEndian)
+      const count = view.getUint32(entryOffset + 4, info.littleEndian)
+      const tagValues = readTiffValues(view, entryOffset, type, count, info.littleEndian)
+      values.set(tag, tagValues)
+      if (tag === 0x014a) subIfdOffsets.push(...tagValues)
+    }
+
+    const addCandidates = (offsets: number[] | undefined, lengths: number[] | undefined, target: TiffCandidate[]) => {
+      if (!offsets || !lengths) return
+      const count = Math.min(offsets.length, lengths.length)
+      for (let index = 0; index < count; index += 1) {
+        if (offsets[index] && lengths[index]) {
+          target.push({ offset: offsets[index]!, length: lengths[index]! })
+        }
+      }
+    }
+
+    addCandidates(values.get(0x0201), values.get(0x0202), previewCandidates)
+    addCandidates(values.get(0x0111), values.get(0x0117), isPreviewIfd ? previewCandidates : fallbackCandidates)
+    addCandidates(values.get(0x0144), values.get(0x0145), isPreviewIfd ? previewCandidates : fallbackCandidates)
+
+    subIfdOffsets.forEach(offset => visitIfd(offset, true))
+    visitIfd(view.getUint32(entriesEnd, info.littleEndian), isPreviewIfd)
+  }
+
+  visitIfd(info.firstIfdOffset, false)
+  const candidates = (previewCandidates.length ? previewCandidates : fallbackCandidates)
+    .sort((left, right) => right.length - left.length)
+
+  for (const candidate of candidates) {
+    const end = candidate.offset + candidate.length
+    if (candidate.offset < 0 || end > buffer.byteLength) continue
+
+    const data = new Uint8Array(buffer, candidate.offset, candidate.length)
+    if (data[0] !== 0xff || data[1] !== 0xd8) continue
+    for (let index = data.length - 2; index >= 2; index -= 1) {
+      if (data[index] === 0xff && data[index + 1] === 0xd9) {
+        const preview = new ArrayBuffer(data.byteLength)
+        new Uint8Array(preview).set(data)
+        return preview
+      }
+    }
+  }
+
+  return null
+}
+
+const isImageLikeFile = (file: File) => (
+  file.type.startsWith('image/') || /\.(dng|tif|tiff)$/i.test(file.name)
+)
 
 const getCompressedFileName = (file: File, contentType: string) => {
   const baseName = file.name.replace(/\.[^/.]+$/, '') || 'image'
   const extension = contentType === 'image/jpeg' ? 'jpg' : contentType.split('/')[1] || 'bin'
   return `${baseName}-compressed.${extension}`
+}
+
+/**
+ * 将 DNG/TIFF 中的内嵌 JPEG 预览转换为浏览器可处理的 JPG。
+ */
+export async function prepareImageFile(file: File): Promise<File> {
+  if (!isImageLikeFile(file)) return file
+
+  const header = await file.slice(0, 8).arrayBuffer()
+  if (!getTiffInfo(new DataView(header))) return file
+
+  const preview = extractTiffPreview(await file.arrayBuffer())
+  if (!preview) {
+    throw new Error('无法读取 DNG/TIFF 图片，请先导出为 JPG 或 PNG')
+  }
+
+  const baseName = file.name.replace(/\.[^/.]+$/, '') || 'image'
+  return new File([preview], `${baseName}-converted.jpg`, {
+    type: 'image/jpeg',
+    lastModified: file.lastModified
+  })
 }
 
 /**
@@ -262,7 +396,8 @@ const uploadFileInChunks = async (file: File, type: string, options: UploadOptio
  * @returns {Promise<UploadResponse>} 上传结果
  */
 export async function uploadFile(file: File, type = 'image', options: UploadOptions = {}): Promise<UploadResponse> {
-  const uploadTarget = await compressImage(file)
+  const preparedFile = await prepareImageFile(file)
+  const uploadTarget = await compressImage(preparedFile)
 
   if (uploadTarget.size >= CHUNK_UPLOAD_THRESHOLD) {
     return uploadFileInChunks(uploadTarget, type, options)

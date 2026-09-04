@@ -63,7 +63,7 @@
 import { ref, computed, nextTick, onUnmounted } from 'vue'
 import { ElMessage, type UploadRequestOptions } from 'element-plus'
 import { Plus, Delete } from '@element-plus/icons-vue'
-import { uploadFile, type UploadProgress } from '@/api/file'
+import { prepareImageFile, uploadFile, type UploadProgress } from '@/api/file'
 
 export interface ImageUploaderProps {
   modelValue?: string // 图片 URL
@@ -114,7 +114,7 @@ const cropDragState = ref({
   startTop: 0
 })
 
-const accept = computed(() => props.allowVideo ? 'image/*,video/*' : 'image/*')
+const accept = computed(() => props.allowVideo ? 'image/*,.dng,.tif,.tiff,video/*' : 'image/*,.dng,.tif,.tiff')
 const isVideoPreview = computed(() => {
   if (pendingFile.value?.type.startsWith('video/')) return true
   return /\.(mp4|webm|ogg|mov|m4v)(?:$|[?#])/i.test(props.modelValue || '')
@@ -274,10 +274,19 @@ const handleUpload = async (options: UploadRequestOptions): Promise<void> => {
   const file = options.file as File
 
   // 验证文件类型
-  const isAllowed = file.type.startsWith('image/') || (props.allowVideo && file.type.startsWith('video/'))
+  const isRawImage = /\.(dng|tif|tiff)$/i.test(file.name) || file.type === 'image/x-adobe-dng'
+  const isAllowed = file.type.startsWith('image/') || isRawImage || (props.allowVideo && file.type.startsWith('video/'))
   if (!isAllowed) {
     ElMessage.error(props.allowVideo ? '请选择图片或视频文件' : '请选择图片文件')
     return Promise.reject()
+  }
+
+  let preparedFile: File
+  try {
+    preparedFile = await prepareImageFile(file)
+  } catch (error: any) {
+    ElMessage.error(error.message || '无法处理图片')
+    return Promise.reject(error)
   }
 
   // 清理旧的预览 URL
@@ -286,12 +295,12 @@ const handleUpload = async (options: UploadRequestOptions): Promise<void> => {
   }
 
   // 保存文件和创建本地预览
-  pendingFile.value = file
-  previewUrl.value = URL.createObjectURL(file)
+  pendingFile.value = preparedFile
+  previewUrl.value = URL.createObjectURL(preparedFile)
   uploadError.value = false
   uploadProgress.value = 0
 
-  if (props.crop && file.type.startsWith('image/')) {
+  if (props.crop && preparedFile.type.startsWith('image/')) {
     void openCrop()
   }
 
