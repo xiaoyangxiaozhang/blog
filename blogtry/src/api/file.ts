@@ -44,6 +44,7 @@ const IMAGE_COMPRESSION_THRESHOLD = 1024 * 1024
 const IMAGE_MAX_DIMENSION = 1920
 const IMAGE_COMPRESSION_QUALITY = 0.82
 const COMPRESSIBLE_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
+const RAW_IMAGE_PATTERN = /\.(dng|tif|tiff)$/i
 const DEFAULT_MAX_RETRIES = 3
 const CHUNK_UPLOAD_STORAGE_PREFIX = 'blogtry:chunk-upload:'
 
@@ -53,11 +54,15 @@ const getCompressedFileName = (file: File, contentType: string) => {
   return `${baseName}-compressed.${extension}`
 }
 
+export const isRawImageFile = (file: File) => (
+  RAW_IMAGE_PATTERN.test(file.name) || ['image/x-adobe-dng', 'image/dng'].includes(file.type)
+)
+
 /**
  * 在浏览器端压缩较大的栅格图片，视频、动图和矢量图保持原文件上传。
  */
 export async function compressImage(file: File): Promise<File> {
-  if (file.size <= IMAGE_COMPRESSION_THRESHOLD || !COMPRESSIBLE_IMAGE_TYPES.has(file.type)) {
+  if (isRawImageFile(file) || file.size <= IMAGE_COMPRESSION_THRESHOLD || !COMPRESSIBLE_IMAGE_TYPES.has(file.type)) {
     return file
   }
 

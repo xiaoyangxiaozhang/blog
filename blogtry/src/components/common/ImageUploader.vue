@@ -63,7 +63,7 @@
 import { ref, computed, nextTick, onUnmounted } from 'vue'
 import { ElMessage, type UploadRequestOptions } from 'element-plus'
 import { Plus, Delete } from '@element-plus/icons-vue'
-import { uploadFile, type UploadProgress } from '@/api/file'
+import { isRawImageFile, uploadFile, type UploadProgress } from '@/api/file'
 
 export interface ImageUploaderProps {
   modelValue?: string // 图片 URL
@@ -93,6 +93,7 @@ const previewUrl = ref<string>('') // 本地预览 URL
 const uploading = ref(false)
 const uploadProgress = ref(0)
 const uploadError = ref(false)
+const serverPreviewPending = ref(false)
 const cropVisible = ref(false)
 const cropSourceUrl = ref('')
 const cropStageRef = ref<HTMLElement | null>(null)
@@ -114,7 +115,7 @@ const cropDragState = ref({
   startTop: 0
 })
 
-const accept = computed(() => props.allowVideo ? 'image/*,video/*' : 'image/*')
+const accept = computed(() => props.allowVideo ? 'image/*,.dng,.tif,.tiff,video/*' : 'image/*,.dng,.tif,.tiff')
 const isVideoPreview = computed(() => {
   if (pendingFile.value?.type.startsWith('video/')) return true
   return /\.(mp4|webm|ogg|mov|m4v)(?:$|[?#])/i.test(props.modelValue || '')
@@ -126,6 +127,25 @@ const imageUrl = computed(() => {
   if (previewUrl.value) return previewUrl.value
   return props.modelValue || ''
 })
+
+const revokePreviewUrl = () => {
+  if (previewUrl.value.startsWith('blob:')) {
+    URL.revokeObjectURL(previewUrl.value)
+  }
+  previewUrl.value = ''
+}
+
+const hasTIFFHeader = async (file: File) => {
+  try {
+    const header = new Uint8Array(await file.slice(0, 4).arrayBuffer())
+    return header.length === 4 && (
+      (header[0] === 0x49 && header[1] === 0x49 && header[2] === 0x2a && header[3] === 0x00) ||
+      (header[0] === 0x4d && header[1] === 0x4d && header[2] === 0x00 && header[3] === 0x2a)
+    )
+  } catch {
+    return false
+  }
+}
 
 const cropImageStyle = computed(() => ({
   width: `${cropImageState.value.width}px`,
@@ -214,10 +234,7 @@ const resetCrop = () => {
 const cancelCrop = () => {
   if (cropSaving.value) return
 
-  if (previewUrl.value) {
-    URL.revokeObjectURL(previewUrl.value)
-    previewUrl.value = ''
-  }
+  revokePreviewUrl()
   pendingFile.value = null
   uploadError.value = false
   uploadProgress.value = 0
@@ -255,7 +272,7 @@ const confirmCrop = async () => {
     const croppedFile = new File([blob], 'cover-cropped.jpg', { type: 'image/jpeg' })
     pendingFile.value = croppedFile
     previewUrl.value = URL.createObjectURL(croppedFile)
-    if (oldPreviewUrl) URL.revokeObjectURL(oldPreviewUrl)
+    if (oldPreviewUrl?.startsWith('blob:')) URL.revokeObjectURL(oldPreviewUrl)
     resetCrop()
     ElMessage.success('封面裁切已应用')
   } catch (error: any) {
@@ -265,7 +282,7 @@ const confirmCrop = async () => {
   }
 }
 
-// 上传处理（延迟上传：只做本地预览）
+// 上传处理：普通图片延迟上传；浏览器无法预览的 RAW/TIFF 先交给后端转换。
 const handleUpload = async (options: UploadRequestOptions): Promise<void> => {
   if (props.disabled) {
     return Promise.resolve()
@@ -274,19 +291,46 @@ const handleUpload = async (options: UploadRequestOptions): Promise<void> => {
   const file = options.file as File
 
   // 验证文件类型
-  const isAllowed = file.type.startsWith('image/') || (props.allowVideo && file.type.startsWith('video/'))
+  const isAllowed = file.type.startsWith('image/') || isRawImageFile(file) || (props.allowVideo && file.type.startsWith('video/'))
   if (!isAllowed) {
     ElMessage.error(props.allowVideo ? '请选择图片或视频文件' : '请选择图片文件')
     return Promise.reject()
   }
 
+  const needsServerPreview = isRawImageFile(file) || await hasTIFFHeader(file)
+
   // 清理旧的预览 URL
-  if (previewUrl.value) {
-    URL.revokeObjectURL(previewUrl.value)
+  revokePreviewUrl()
+
+  if (needsServerPreview) {
+    pendingFile.value = file
+    serverPreviewPending.value = true
+    uploading.value = true
+    uploadError.value = false
+    uploadProgress.value = 0
+    const loading = ElMessage.info({ message: '正在转换 RAW 图片...', duration: 0 })
+    try {
+      const result = await uploadFile(file, props.uploadType, { onProgress: handleProgress })
+      uploadProgress.value = 100
+      previewUrl.value = result.file_url
+      pendingFile.value = null
+      serverPreviewPending.value = false
+      emit('update:modelValue', result.file_url)
+      if (props.crop) void openCrop()
+    } catch (error: any) {
+      uploadError.value = true
+      ElMessage.error(error.message || 'RAW 图片转换失败')
+      throw error
+    } finally {
+      loading.close()
+      uploading.value = false
+    }
+    return Promise.resolve()
   }
 
   // 保存文件和创建本地预览
   pendingFile.value = file
+  serverPreviewPending.value = false
   previewUrl.value = URL.createObjectURL(file)
   uploadError.value = false
   uploadProgress.value = 0
@@ -303,11 +347,9 @@ const handleDelete = () => {
   if (props.disabled) return
 
   // 清理本地预览
-  if (previewUrl.value) {
-    URL.revokeObjectURL(previewUrl.value)
-    previewUrl.value = ''
-  }
+  revokePreviewUrl()
   pendingFile.value = null
+  serverPreviewPending.value = false
   uploading.value = false
   uploadError.value = false
   uploadProgress.value = 0
@@ -332,14 +374,18 @@ const uploadPendingFile = async (): Promise<string | null> => {
     uploadProgress.value = 100
 
     // 清理本地预览
-    if (previewUrl.value) {
-      URL.revokeObjectURL(previewUrl.value)
-      previewUrl.value = ''
+    const shouldOpenCrop = serverPreviewPending.value && props.crop
+    if (shouldOpenCrop) {
+      previewUrl.value = result.file_url
+    } else {
+      revokePreviewUrl()
     }
     pendingFile.value = null
+    serverPreviewPending.value = false
 
     // 更新值
     emit('update:modelValue', result.file_url)
+    if (shouldOpenCrop) void openCrop()
     return result.file_url
   } catch (error: any) {
     uploadError.value = true
@@ -374,7 +420,7 @@ defineExpose({
 
 onUnmounted(() => {
   stopCropDrag()
-  if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
+  revokePreviewUrl()
 })
 </script>
 
