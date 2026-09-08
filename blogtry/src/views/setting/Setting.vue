@@ -133,6 +133,7 @@ const blogForm = ref({
   favicon: '',
   background_image: '',
   screenshot: '',
+  theme_color: '#8183ff',
   announcement: '',
   typingTextsList: [] as Array<{ value: string }>,
 
@@ -298,6 +299,7 @@ const loadBlogConfigs = async () => {
       favicon: configs.favicon || '',
       background_image: configs.background_image || '',
       screenshot: configs.screenshot || '',
+      theme_color: configs.theme_color || '#8183ff',
       announcement: configs.announcement || '',
 
       // 关于页面配置
@@ -588,6 +590,7 @@ const handleSave = async () => {
       'blog.favicon': blogForm.value.favicon,
       'blog.background_image': blogForm.value.background_image,
       'blog.screenshot': blogForm.value.screenshot,
+      'blog.theme_color': blogForm.value.theme_color,
       'blog.announcement': blogForm.value.announcement,
       'blog.typing_texts': JSON.stringify(blogForm.value.typingTextsList.map(item => item.value)),
       'blog.sidebar_social': JSON.stringify(blogForm.value.sidebarSocialList),

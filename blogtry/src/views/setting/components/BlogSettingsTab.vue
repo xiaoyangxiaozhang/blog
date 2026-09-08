@@ -29,6 +29,13 @@
 
     <el-divider content-position="left">全局样式</el-divider>
 
+    <el-form-item label="主题色">
+      <div class="theme-color-setting">
+        <el-color-picker v-model="form.theme_color" color-format="hex" :disabled="loading" />
+        <span>用于按钮、链接和交互状态，默认使用紫蓝色。</span>
+      </div>
+    </el-form-item>
+
     <div class="image-row">
       <el-form-item label="网站Favicon">
         <ImageUploader ref="faviconUploaderRef" v-model="form.favicon" upload-type="博客图标" width="120px"
@@ -262,6 +269,7 @@ interface BlogFormData {
   favicon: string
   background_image: string
   screenshot: string
+  theme_color: string
   announcement: string
   typingTextsList: Array<{ value: string }>
 
@@ -401,6 +409,14 @@ defineExpose({
 
 <style lang="scss" scoped>
 .setting-form {
+  .theme-color-setting {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--el-text-color-secondary);
+    font-size: 13px;
+  }
+
   .image-row {
     display: flex;
     gap: 40px;
