@@ -92,6 +92,26 @@
       <el-input v-model="form.about_describe_tips" placeholder="例如：前端工程师 · 业余 · 专注 · 享受生活" :disabled="loading" />
     </el-form-item>
 
+    <el-divider content-position="left">留言页文案</el-divider>
+
+    <el-form-item label="留言区标题">
+      <el-input v-model="form.about_guestbook_title" placeholder="例如：留言簿" :disabled="loading" />
+    </el-form-item>
+
+    <el-form-item label="留言区说明">
+      <el-input v-model="form.about_guestbook_description" type="textarea" :rows="3"
+        placeholder="留言区标题下的说明，支持换行" :disabled="loading" />
+    </el-form-item>
+
+    <el-form-item label="留言前引导">
+      <el-input v-model="form.about_guestbook_transition" type="textarea" :rows="3"
+        placeholder="关于内容与留言区之间的引导文案，支持换行" :disabled="loading" />
+    </el-form-item>
+
+    <el-form-item label="无留言提示">
+      <el-input v-model="form.about_guestbook_empty_text" placeholder="还没有留言，来说点什么吧。" :disabled="loading" />
+    </el-form-item>
+
     <el-form-item label="展览图片">
       <ImageUploader ref="aboutExhibitionUploaderRef" v-model="form.about_exhibition" upload-type="展览图片" width="213px"
         height="120px" :disabled="loading" />
@@ -283,6 +303,10 @@ interface BlogFormData {
   // 关于页面配置
   about_describe: string
   about_describe_tips: string
+  about_guestbook_title: string
+  about_guestbook_description: string
+  about_guestbook_transition: string
+  about_guestbook_empty_text: string
   about_exhibition: string
   about_model_enabled: boolean
   about_model_url: string
