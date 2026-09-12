@@ -214,6 +214,7 @@ const chatbotForm = ref<ChatbotForm>({
   avoidPhrasesList: [],
   boundaries: '',
   dialogueExamples: [],
+  abuse_response_style: '',
   knowledge_enabled: true,
   max_history: 8,
   per_minute_limit: 5,
@@ -457,6 +458,7 @@ const loadChatbotConfigs = async () => {
           'question' in item && typeof item.question === 'string' &&
           'answer' in item && typeof item.answer === 'string'
         )),
+      abuse_response_style: configs.abuse_response_style || '',
       knowledge_enabled: configs.knowledge_enabled !== 'false',
       max_history: Number(configs.max_history || 8),
       per_minute_limit: Number(configs.per_minute_limit || 5),
@@ -684,6 +686,7 @@ const handleSave = async () => {
       dialogue_examples: JSON.stringify(chatbotForm.value.dialogueExamples
         .map(item => ({ question: item.question.trim(), answer: item.answer.trim() }))
         .filter(item => item.question && item.answer)),
+      abuse_response_style: chatbotForm.value.abuse_response_style,
       knowledge_enabled: chatbotForm.value.knowledge_enabled ? 'true' : 'false',
       max_history: String(chatbotForm.value.max_history),
       per_minute_limit: String(chatbotForm.value.per_minute_limit),

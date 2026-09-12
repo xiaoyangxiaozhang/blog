@@ -85,6 +85,16 @@
       <el-input v-model="form.boundaries" type="textarea" :rows="5" placeholder="哪些内容不能猜测或公开，遇到不确定信息如何回答。" :disabled="loading" />
     </el-form-item>
 
+    <el-form-item label="冲突回应风格">
+      <el-input
+        v-model="form.abuse_response_style"
+        type="textarea"
+        :rows="5"
+        placeholder="用户辱骂或挑衅时如何回应，例如：直接回击、允许使用适度脏话和讽刺，不要劝说或说教。"
+        :disabled="loading"
+      />
+    </el-form-item>
+
     <el-form-item label="对话示例">
       <div class="dialogue-examples">
         <div v-for="(item, index) in form.dialogueExamples" :key="index" class="dialogue-example">

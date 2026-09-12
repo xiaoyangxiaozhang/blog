@@ -20,6 +20,7 @@ export interface ChatbotForm {
   avoidPhrasesList: Array<{ value: string }>
   boundaries: string
   dialogueExamples: ChatbotDialogueExample[]
+  abuse_response_style: string
   knowledge_enabled: boolean
   max_history: number
   per_minute_limit: number
