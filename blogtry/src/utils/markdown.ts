@@ -777,6 +777,14 @@ const MARKDOWN_STYLES = `
 .markdown-content .code-block-container pre code .line-number { display: inline-block; width: 2em; padding-right: 1em; margin-right: 1em; text-align: right; color: #858585; border-right: 1px solid #d1d5da; user-select: none; }
 .markdown-content .code-block-container pre code .line-number::before { content: attr(data-line); }
 .markdown-content .code-block-container pre code .line-content { display: inline; white-space: pre; }
+.markdown-content .code-block-container pre code.hljs { color: #24292e; }
+.markdown-content .code-block-container pre code .hljs-comment, .markdown-content .code-block-container pre code .hljs-quote { color: #008000; }
+.markdown-content .code-block-container pre code .hljs-keyword, .markdown-content .code-block-container pre code .hljs-selector-tag { color: #0000ff; }
+.markdown-content .code-block-container pre code .hljs-type, .markdown-content .code-block-container pre code .hljs-built_in, .markdown-content .code-block-container pre code .hljs-title.class_ { color: #267f99; }
+.markdown-content .code-block-container pre code .hljs-title.function_, .markdown-content .code-block-container pre code .hljs-function .hljs-title { color: #795e26; }
+.markdown-content .code-block-container pre code .hljs-variable, .markdown-content .code-block-container pre code .hljs-params, .markdown-content .code-block-container pre code .hljs-template-variable, .markdown-content .code-block-container pre code .hljs-property { color: #001080; }
+.markdown-content .code-block-container pre code .hljs-string, .markdown-content .code-block-container pre code .hljs-attr, .markdown-content .code-block-container pre code .hljs-attribute { color: #a31515; }
+.markdown-content .code-block-container pre code .hljs-number, .markdown-content .code-block-container pre code .hljs-literal { color: #098658; }
 .markdown-content .code-block-container.collapsed .code-fold-btn i { transform: rotate(-90deg); }
 .markdown-content .code-block-container.collapsed pre { display: none; }
 .markdown-content table { border-collapse: collapse; width: 100%; margin: 1.5em 0; font-size: 0.9em; } .markdown-content th, .markdown-content td { padding: 0.75em 1em; border: 1px solid rgba(128, 128, 128, 0.15); text-align: left; } .markdown-content th { font-weight: 600; color: #2c3e50; background: linear-gradient(135deg, rgba(73, 177, 245, 0.1), rgba(73, 177, 245, 0.05)); }
