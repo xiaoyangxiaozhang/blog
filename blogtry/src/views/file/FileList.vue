@@ -37,9 +37,13 @@
       </template>
     </el-table-column>
 
-    <el-table-column label="操作" width="180" align="center" fixed="right">
+    <el-table-column label="操作" width="320" align="center" fixed="right">
       <template #default="{ row }">
         <el-button link type="primary" size="small" @click="copyUrl(row)">复制链接</el-button>
+        <el-button v-if="canCompress(row)" link type="primary" size="small" :loading="compressingId === row.id"
+          :disabled="compressingId !== null && compressingId !== row.id" @click="handleCompress(row)">压缩</el-button>
+        <el-button v-if="canCompress(row)" link type="warning" size="small" :loading="compressingId === row.id"
+          :disabled="compressingId !== null && compressingId !== row.id" @click="handleCompress(row, true)">压缩并替换</el-button>
         <el-button link type="danger" size="small" @click="handleDelete(row.id)">删除</el-button>
       </template>
     </el-table-column>
@@ -50,7 +54,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import CommonList from '@/components/common/CommonList.vue'
-import { getFileList, deleteFile } from '@/api/file'
+import { compressManagedImage, getFileList, deleteFile } from '@/api/file'
 import type { FileInfo, FileListQuery } from '@/types/file'
 import { formatDateTime } from '@/utils/date'
 
@@ -58,6 +62,7 @@ const query = reactive<FileListQuery>({ page: 1, page_size: 20 })
 const fileList = ref<FileInfo[]>([])
 const total = ref(0)
 const loading = ref(false)
+const compressingId = ref<number | null>(null)
 // 最新的请求ID，用于取消旧的请求
 let latestRequestId = 0
 const loadList = async () => {
@@ -100,6 +105,55 @@ const handleDelete = async (id: number) => {
 }
 
 const isImage = (file: FileInfo) => file.file_type?.startsWith('image/')
+
+const canCompress = (file: FileInfo) => ['image/jpeg', 'image/jpg', 'image/png'].includes(file.file_type?.toLowerCase())
+
+const handleCompress = async (file: FileInfo, replaceReferences = false) => {
+  let quality = 80
+
+  try {
+    if (file.file_type?.toLowerCase() !== 'image/png') {
+      const result = await ElMessageBox.prompt('请输入 JPEG 质量（10-95，数值越低体积越小）', replaceReferences ? '压缩并替换' : '压缩图片', {
+        confirmButtonText: '开始压缩',
+        cancelButtonText: '取消',
+        inputValue: '80',
+        inputPattern: /^(?:1[0-9]|[2-8][0-9]|9[0-5])$/,
+        inputErrorMessage: '请输入 10-95 之间的整数'
+      })
+      quality = Number(result.value)
+    } else {
+      await ElMessageBox.confirm(
+        replaceReferences
+          ? '将生成一个无损压缩的 PNG 副本，并替换已保存的文章、动态等图片引用，原图保留。'
+          : '将生成一个无损压缩的 PNG 副本，原图保持不变。',
+        replaceReferences ? '压缩并替换' : '压缩图片',
+        {
+          confirmButtonText: '开始压缩',
+          cancelButtonText: '取消',
+          type: 'info'
+        }
+      )
+    }
+
+    if (replaceReferences) {
+      await ElMessageBox.confirm('压缩成功后，将替换已保存的文章、动态、菜单、友链、头像和评论中的原图片引用，原图保留。', '确认替换引用', {
+        confirmButtonText: '继续替换',
+        cancelButtonText: '取消',
+        type: 'warning'
+      })
+    }
+
+    compressingId.value = file.id
+    const result = await compressManagedImage(file.id, quality, replaceReferences)
+    const replaceMessage = replaceReferences ? `，替换 ${result.replaced_references} 条引用` : ''
+    ElMessage.success(`压缩完成，节省 ${result.saved_percent.toFixed(1)}%${replaceMessage}`)
+    await loadList()
+  } catch (error) {
+    if (error !== 'cancel' && error instanceof Error) ElMessage.error(error.message)
+  } finally {
+    if (compressingId.value === file.id) compressingId.value = null
+  }
+}
 
 const formatFileSize = (size: number) => {
   if (size < 1024) return size + ' B'

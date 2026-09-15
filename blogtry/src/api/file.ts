@@ -22,6 +22,15 @@ export interface UploadOptions {
   signal?: AbortSignal
 }
 
+export interface ImageCompressionResponse {
+  file: FileInfo
+  original_size: number
+  compressed_size: number
+  saved_bytes: number
+  saved_percent: number
+  replaced_references: number
+}
+
 interface ChunkUploadInitResponse {
   upload_id: string
   chunk_size: number
@@ -308,4 +317,11 @@ export function getFileList(params: FileListQuery): Promise<FileListData> {
  */
 export function deleteFile(id: number): Promise<void> {
   return request.delete(`/admin/files/${id}`);
+}
+
+/**
+ * 在服务端压缩一张图片，并生成新的文件记录。
+ */
+export function compressManagedImage(id: number, quality = 80, replaceReferences = false): Promise<ImageCompressionResponse> {
+  return request.post(`/admin/files/${id}/compress`, { quality, replace_references: replaceReferences }, { timeout: 0 })
 }
