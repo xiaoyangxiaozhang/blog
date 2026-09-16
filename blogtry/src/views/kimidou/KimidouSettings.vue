@@ -24,9 +24,21 @@
           />
         </el-form-item>
 
+        <el-form-item label="社区简介">
+          <el-input
+            v-model="description"
+            type="textarea"
+            :rows="2"
+            maxlength="100"
+            show-word-limit
+            placeholder="例如：前景可待 未来可期"
+            :disabled="loading || saving"
+          />
+        </el-form-item>
+
         <el-form-item>
-          <el-button type="primary" :loading="saving" :disabled="loading" @click="saveCover">
-            保存封面
+          <el-button type="primary" :loading="saving" :disabled="loading" @click="saveSettings">
+            保存设置
           </el-button>
         </el-form-item>
       </el-form>
@@ -41,6 +53,7 @@ import ImageUploader from '@/components/common/ImageUploader.vue'
 import { getKimidouSettings, updateKimidouSettings } from '@/api/kimidou'
 
 const cover = ref('')
+const description = ref('')
 const loading = ref(false)
 const saving = ref(false)
 const coverUploader = ref<InstanceType<typeof ImageUploader>>()
@@ -50,6 +63,7 @@ const loadSettings = async () => {
   try {
     const settings = await getKimidouSettings()
     cover.value = settings.cover || ''
+    description.value = settings.description || ''
   } catch (error: any) {
     ElMessage.error(error.message || '获取社区设置失败')
   } finally {
@@ -57,18 +71,19 @@ const loadSettings = async () => {
   }
 }
 
-const saveCover = async () => {
+const saveSettings = async () => {
   saving.value = true
   try {
     if (coverUploader.value?.getPendingCount()) {
       const uploaded = await coverUploader.value.uploadPendingFile()
       if (uploaded) cover.value = uploaded
     }
-    await updateKimidouSettings({ cover: cover.value.trim() })
     cover.value = cover.value.trim()
-    ElMessage.success('社区封面已保存')
+    description.value = description.value.trim()
+    await updateKimidouSettings({ cover: cover.value, description: description.value })
+    ElMessage.success('社区设置已保存')
   } catch (error: any) {
-    ElMessage.error(error.message || '保存社区封面失败')
+    ElMessage.error(error.message || '保存社区设置失败')
   } finally {
     saving.value = false
   }
