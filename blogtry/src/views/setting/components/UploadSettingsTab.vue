@@ -45,14 +45,14 @@
         <el-input v-model="form.endpoint" :placeholder="endpointPlaceholder" clearable :disabled="loading" />
       </el-form-item>
 
-      <el-form-item label="自定义域名">
-        <el-input v-model="form.domain" :placeholder="domainPlaceholder" clearable :disabled="loading" />
-      </el-form-item>
-
       <el-form-item v-if="showUseSSL" label="启用 HTTPS">
         <el-switch v-model="form.use_ssl" :active-value="true" :inactive-value="false" :disabled="loading" />
       </el-form-item>
     </template>
+
+    <el-form-item label="文件访问域名">
+      <el-input v-model="form.domain" :placeholder="domainPlaceholder" clearable :disabled="loading" />
+    </el-form-item>
   </el-form>
 </template>
 
