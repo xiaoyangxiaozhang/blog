@@ -38,6 +38,36 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '动态列表', requiresAuth: true }
       },
       {
+        path: '/kimidou/moments',
+        name: 'kimidouMoments',
+        component: () => import('@/views/kimidou/KimidouMomentList.vue'),
+        meta: { title: '我的动态', requiresAuth: true, module: 'kimidou', minimumRole: 'user' }
+      },
+      {
+        path: '/kimidou/profile',
+        name: 'kimidouProfile',
+        component: () => import('@/views/kimidou/KimidouProfile.vue'),
+        meta: { title: '个人资料', requiresAuth: true, module: 'kimidou', minimumRole: 'user' }
+      },
+      {
+        path: '/kimidou/users',
+        name: 'kimidouUsers',
+        component: () => import('@/views/kimidou/KimidouUserList.vue'),
+        meta: { title: '用户管理', requiresAuth: true, module: 'kimidou', minimumRole: 'admin' }
+      },
+      {
+        path: '/kimidou/comments',
+        name: 'kimidouComments',
+        component: () => import('@/views/kimidou/KimidouCommentList.vue'),
+        meta: { title: '评论管理', requiresAuth: true, module: 'kimidou', minimumRole: 'admin' }
+      },
+      {
+        path: '/kimidou/settings',
+        name: 'kimidouSettings',
+        component: () => import('@/views/kimidou/KimidouSettings.vue'),
+        meta: { title: '社区设置', requiresAuth: true, module: 'kimidou', minimumRole: 'admin' }
+      },
+      {
         path: '/friends',
         name: 'friends',
         component: () => import('@/views/friend/FriendList.vue'),
@@ -140,7 +170,7 @@ router.beforeEach(async (to) => {
 
     try {
       await authStore.ensureUserInfo()
-      return '/'
+      return authStore.isSuperAdmin() ? '/' : '/kimidou/moments'
     } catch {
       return true
     }
@@ -158,12 +188,21 @@ router.beforeEach(async (to) => {
     }
   }
 
+  if (requiresAuth && !authStore.isSuperAdmin() && to.meta.module !== 'kimidou') {
+    return '/kimidou/moments'
+  }
+
+  const minimumRole = to.meta.minimumRole
+  if (requiresAuth && typeof minimumRole === 'string' && !authStore.canAccessRole(minimumRole)) {
+    return authStore.isSuperAdmin() ? '/' : '/kimidou/moments'
+  }
+
   // 如果需要超级管理员权限，必须确保用户信息已获取
   if (requiresSuperAdmin) {
     try {
       await authStore.ensureUserInfo()
       if (!authStore.isSuperAdmin()) {
-        return '/'
+        return authStore.isSuperAdmin() ? '/' : '/kimidou/moments'
       }
     } catch {
       return '/login'

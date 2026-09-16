@@ -36,6 +36,9 @@
       <el-form-item v-if="isEdit" label="状态" prop="is_enabled">
         <el-switch v-model="formData.is_enabled" active-text="启用" inactive-text="禁用" />
       </el-form-item>
+      <el-form-item v-if="formData.role === 'user'" label="基米斗发帖">
+        <el-switch v-model="formData.can_post_moments" active-text="允许" inactive-text="禁止" />
+      </el-form-item>
     </el-form>
 
     <template #footer>
@@ -70,6 +73,7 @@ interface UserFormData {
   website?: string
   role: UserRoleOption
   is_enabled?: boolean
+  can_post_moments: boolean
 }
 
 const props = defineProps<{
@@ -118,7 +122,8 @@ const formData = ref<UserFormData>({
   badge: '',
   website: '',
   role: getDefaultRole(),
-  is_enabled: true
+  is_enabled: true,
+  can_post_moments: false
 })
 
 // 表单验证规则
@@ -162,7 +167,8 @@ const resetFormData = () => {
     badge: '',
     website: '',
     role: getDefaultRole(),
-    is_enabled: true
+    is_enabled: true,
+    can_post_moments: false
   }
 }
 
@@ -177,7 +183,8 @@ watch(() => props.editUser, (user) => {
       badge: user.badge || '',
       website: user.website || '',
       role: user.role as UserRoleOption,
-      is_enabled: user.is_enabled
+      is_enabled: user.is_enabled,
+      can_post_moments: user.can_post_moments
     }
   } else {
     resetFormData()
@@ -231,7 +238,8 @@ const handleSubmit = async () => {
         badge: formData.value.badge,
         website: formData.value.website,
         role: formData.value.role,
-        is_enabled: formData.value.is_enabled
+        is_enabled: formData.value.is_enabled,
+        can_post_moments: formData.value.can_post_moments
       }
 
       // 如果填写了新密码，则包含密码字段

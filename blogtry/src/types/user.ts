@@ -6,6 +6,7 @@ export interface User {
     avatar: string
     badge?: string
     website?: string
+    can_post_moments: boolean
     role: string   // super_admin | admin | user | guest
     is_enabled: boolean // 是否启用
     last_login: string
@@ -55,6 +56,7 @@ export interface UpdateUserRequest {
     website?: string
     role?: 'super_admin' | 'admin' | 'user' | 'guest'
     is_enabled?: boolean
+    can_post_moments?: boolean
 }
 
 // 分页数据

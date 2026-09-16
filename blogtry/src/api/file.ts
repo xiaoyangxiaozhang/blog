@@ -277,8 +277,10 @@ const uploadFileInChunks = async (file: File, type: string, options: UploadOptio
  */
 export async function uploadFile(file: File, type = 'image', options: UploadOptions = {}): Promise<UploadResponse> {
   const uploadTarget = await compressImage(file)
+	const publicUpload = ['avatar', 'cat_moment', 'kimidou_moment', 'kimidou_cover'].includes(type.toLowerCase())
 
   if (uploadTarget.size >= CHUNK_UPLOAD_THRESHOLD) {
+	    if (publicUpload) throw new Error('头像或基米斗图片不能超过10MB')
     return uploadFileInChunks(uploadTarget, type, options)
   }
 
@@ -286,7 +288,7 @@ export async function uploadFile(file: File, type = 'image', options: UploadOpti
   formData.append("file", uploadTarget);
   formData.append("type", type);
   try {
-    return await request.post("/admin/files", formData, {
+    return await request.post(publicUpload ? "/upload" : "/admin/files", formData, {
       headers: { "Content-Type": "multipart/form-data" },
       onUploadProgress: event => {
         emitProgress(options.onProgress, event.loaded || 0, uploadTarget.size)

@@ -58,6 +58,9 @@ export const useAuthStore = defineStore('auth', () => {
       if (!user.role) {
         user.role = 'user'
       }
+      if (typeof user.can_post_moments !== 'boolean') {
+        user.can_post_moments = false
+      }
       if (!user.is_enabled) {
         user.is_enabled = true
       }
@@ -193,6 +196,15 @@ export const useAuthStore = defineStore('auth', () => {
   const isSuperAdmin = (): boolean => {
     return currentUser.value?.role === 'super_admin'
   }
+
+  const isAdminOrAbove = (): boolean => {
+    return currentUser.value?.role === 'admin' || isSuperAdmin()
+  }
+
+  const canAccessRole = (minimumRole: string): boolean => {
+    const levels: Record<string, number> = { user: 1, admin: 2, super_admin: 3 }
+    return (levels[currentUser.value?.role || ''] || 0) >= (levels[minimumRole] || 99)
+  }
   
   const checkAuth = (): boolean => {
     const token = getAccessToken()
@@ -236,6 +248,8 @@ export const useAuthStore = defineStore('auth', () => {
     ensureUserInfo,
     getCurrentUserRole,
     isSuperAdmin,
+    isAdminOrAbove,
+    canAccessRole,
     checkAuth,
     refreshAccessToken,
     restoreSession,

@@ -7,12 +7,41 @@
     </div>
     <el-menu class="admin-menu" :default-active="route.path" :collapse="isCollapse" background-color="transparent"
       text-color="var(--admin-text-muted)" active-text-color="var(--admin-brand)" router @select="handleMenuSelect">
-      <el-menu-item index="/">
+      <el-menu-item v-if="isSuperAdmin" index="/">
         <i class="ri-dashboard-2-line ri-lg"></i>
         <template #title><span>仪表盘</span></template>
       </el-menu-item>
 
-      <el-sub-menu index="content">
+      <el-sub-menu index="kimidou">
+        <template #title>
+          <i class="ri-heart-3-line ri-lg"></i>
+          <span>基米斗管理</span>
+        </template>
+        <el-menu-item index="/kimidou/moments">
+          <i class="ri-chat-smile-2-line ri-lg"></i>
+          <template #title>{{ isAdminOrAbove ? '动态管理' : '我的动态' }}</template>
+        </el-menu-item>
+        <el-menu-item index="/kimidou/profile">
+          <i class="ri-user-settings-line ri-lg"></i>
+          <template #title>个人资料</template>
+        </el-menu-item>
+        <template v-if="isAdminOrAbove">
+          <el-menu-item index="/kimidou/users">
+            <i class="ri-team-line ri-lg"></i>
+            <template #title>用户管理</template>
+          </el-menu-item>
+          <el-menu-item index="/kimidou/comments">
+            <i class="ri-message-3-line ri-lg"></i>
+            <template #title>评论管理</template>
+          </el-menu-item>
+          <el-menu-item index="/kimidou/settings">
+            <i class="ri-image-edit-line ri-lg"></i>
+            <template #title>社区设置</template>
+          </el-menu-item>
+        </template>
+      </el-sub-menu>
+
+      <el-sub-menu v-if="isSuperAdmin" index="content">
         <template #title>
           <i class="ri-layout-2-line ri-lg"></i>
           <span>内容管理</span>
@@ -27,7 +56,7 @@
         </el-menu-item>
       </el-sub-menu>
 
-      <el-sub-menu index="interaction">
+      <el-sub-menu v-if="isSuperAdmin" index="interaction">
         <template #title>
           <i class="ri-chat-2-line ri-lg"></i>
           <span>互动管理</span>
@@ -50,7 +79,7 @@
         </el-menu-item>
       </el-sub-menu>
 
-      <el-sub-menu index="management">
+      <el-sub-menu v-if="isSuperAdmin" index="management">
         <template #title>
           <i class="ri-admin-line ri-lg"></i>
           <span>系统管理</span>
@@ -86,9 +115,14 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
+const authStore = useAuthStore()
+const isSuperAdmin = computed(() => authStore.isSuperAdmin())
+const isAdminOrAbove = computed(() => authStore.isAdminOrAbove())
 
 defineProps<{
   isCollapse: boolean

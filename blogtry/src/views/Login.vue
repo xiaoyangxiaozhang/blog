@@ -56,7 +56,7 @@ const handleLogin = async () => {
     authStore.setTokens(access_token)
     await authStore.fetchUserInfo()
     ElMessage.success('登录成功')
-    router.push('/')
+    router.push(authStore.isSuperAdmin() ? '/' : '/kimidou/moments')
   } catch (error) {
     authStore.clearAuthState()
     ElMessage.error(error instanceof Error ? error.message : '登录失败')

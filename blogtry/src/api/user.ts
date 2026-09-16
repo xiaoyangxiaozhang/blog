@@ -98,3 +98,15 @@ export function createUser(data: CreateUserRequest): Promise<User> {
 export function updateUser(id: number, data: UpdateUserRequest): Promise<User> {
   return request.put(`/admin/users/${id}`, data);
 }
+
+export function updateProfile(data: Pick<UpdateUserRequest, 'nickname' | 'avatar' | 'website'>): Promise<User> {
+  return request.patch('/user/profile', data)
+}
+
+export function changePassword(data: { old_password: string; new_password: string }): Promise<void> {
+  return request.put('/user/password', data)
+}
+
+export function setPassword(data: { password: string; confirm_password: string }): Promise<void> {
+  return request.post('/user/password', data)
+}

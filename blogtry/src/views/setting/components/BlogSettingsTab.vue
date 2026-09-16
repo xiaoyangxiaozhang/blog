@@ -55,6 +55,15 @@
       </el-form-item>
     </div>
 
+    <el-divider content-position="left">基米斗社区</el-divider>
+
+    <el-form-item label="社区封面">
+      <ImageUploader ref="kimidouCoverUploaderRef" v-model="form.kimidou_cover" upload-type="基米斗社区封面"
+        width="213px" height="146px" :disabled="loading" />
+      <el-input v-model="form.kimidou_cover" placeholder="可直接填写图片地址" :disabled="loading"
+        class="background-url-input" clearable />
+    </el-form-item>
+
     <el-form-item label="侧边栏公告">
       <el-input v-model="form.announcement" type="textarea" :rows="4" placeholder="支持多行文案和简单 HTML"
         :disabled="loading" />
@@ -288,6 +297,7 @@ interface BlogFormData {
   // 全局样式
   favicon: string
   background_image: string
+  kimidou_cover: string
   screenshot: string
   theme_color: string
   announcement: string
@@ -338,6 +348,7 @@ defineProps<{
 // 图片上传器引用
 const faviconUploaderRef = ref<InstanceType<typeof ImageUploader>>()
 const backgroundUploaderRef = ref<InstanceType<typeof ImageUploader>>()
+const kimidouCoverUploaderRef = ref<InstanceType<typeof ImageUploader>>()
 const screenshotUploaderRef = ref<InstanceType<typeof ImageUploader>>()
 const aboutExhibitionUploaderRef = ref<InstanceType<typeof ImageUploader>>()
 
@@ -426,6 +437,7 @@ const handleFontSiteCommand = (url: string) => {
 defineExpose({
   faviconUploaderRef,
   backgroundUploaderRef,
+  kimidouCoverUploaderRef,
   screenshotUploaderRef,
   aboutExhibitionUploaderRef
 })
