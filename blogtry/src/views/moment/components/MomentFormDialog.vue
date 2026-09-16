@@ -1,8 +1,9 @@
 <template>
   <el-dialog
+    class="moment-form-dialog"
     :title="momentStore.dialogTitle"
     v-model="momentStore.dialogVisible"
-    width="800px" :close-on-click-modal="false" top="8vh"
+    :width="dialogWidth" :close-on-click-modal="false" top="8vh"
   >
    <div class="moment-editor">
      <!-- 功能工具栏 -->
@@ -151,7 +152,7 @@
     </template>
   </el-dialog>
    <!-- 链接Dialog -->
-  <el-dialog v-model="linkDialogVisible" title="网站分享" width="400px">
+  <el-dialog v-model="linkDialogVisible" title="网站分享" :width="subDialogWidth">
     <div class="link-form">
       <div style="display: flex; gap: 8px; margin-bottom: 12px;">
         <el-input v-model="formData.content.link!.url" placeholder="请输入网站地址" style="flex: 1;" />
@@ -171,7 +172,7 @@
   </el-dialog>
 
   <!-- 图片Dialog -->
-  <el-dialog v-model="imageDialogVisible" title="动态配图" width="400px">
+  <el-dialog v-model="imageDialogVisible" title="动态配图" :width="subDialogWidth">
     <div class="image-form">
       <div style="display: flex; gap: 8px; margin-bottom: 16px;">
         <el-input v-model="imageUrlInput" placeholder="输入图片链接或点击右侧上传" @keyup.enter="addImageUrl" style="flex: 1;" />
@@ -189,7 +190,7 @@
   </el-dialog>
 
   <!-- 音乐Dialog -->
-  <el-dialog v-model="musicDialogVisible" title="动态音乐" width="400px">
+  <el-dialog v-model="musicDialogVisible" title="动态音乐" :width="subDialogWidth">
     <div class="music-form">
       <el-select v-model="formData.content.music!.server" placeholder="音乐平台" style="width: 100%; margin-bottom: 12px;">
         <el-option label="网易云音乐" value="netease" />
@@ -239,7 +240,7 @@
   </el-dialog>
 
   <!-- 视频Dialog -->
-  <el-dialog v-model="videoDialogVisible" title="动态视频" width="400px">
+  <el-dialog v-model="videoDialogVisible" title="动态视频" :width="subDialogWidth">
     <div class="video-form">
       <div style="display: flex; gap: 8px;">
         <!-- 未添加视频时：显示输入框和解析/上传按钮 -->
@@ -263,7 +264,7 @@
   </el-dialog>
 
   <!-- 标签Dialog -->
-  <el-dialog v-model="tagDialogVisible" title="分类标签" width="400px">
+  <el-dialog v-model="tagDialogVisible" title="分类标签" :width="subDialogWidth">
     <div class="tags-form">
       <el-input v-model="formData.content.tags" placeholder="输入标签名称" maxlength="20" show-word-limit />
       <div style="margin-top: 12px; font-size: 12px; color: var(--admin-text-muted);">
@@ -273,7 +274,7 @@
   </el-dialog>
 
   <!-- 位置Dialog -->
-  <el-dialog v-model="locationDialogVisible" title="发布位置" width="400px">
+  <el-dialog v-model="locationDialogVisible" title="发布位置" :width="subDialogWidth">
     <div class="location-form">
       <el-input v-model="formData.content.location" placeholder="输入位置信息" maxlength="100" show-word-limit />
       <div style="margin-top: 12px; font-size: 12px; color: var(--admin-text-muted);">
@@ -283,7 +284,7 @@
   </el-dialog>
 
   <!-- 时间Dialog -->
-  <el-dialog v-model="timeDialogVisible" title="发布时间" width="400px">
+  <el-dialog v-model="timeDialogVisible" title="发布时间" :width="subDialogWidth">
     <div class="time-form">
       <el-date-picker v-model="publishTime" type="datetime" placeholder="选择发布时间" format="YYYY-MM-DD HH:mm"
         value-format="YYYY-MM-DD HH:mm:ss" style="width: 100%;" />
@@ -294,7 +295,7 @@
   </el-dialog>
 </template>
 <script setup lang="ts">
-import { ref,reactive, computed, watch } from 'vue'
+import { onBeforeUnmount, onMounted, ref, reactive, computed, watch } from 'vue'
 import { useMomentStore } from '@/stores/moment'
 import type { CreateMomentRequest, UpdateMomentRequest } from '@/types/moment'
 import { Link, Picture, Headset, VideoPlay, Location, PriceTag, Timer } from '@element-plus/icons-vue'
@@ -305,6 +306,21 @@ import { uploadFile } from '@/api/file'
 
 // 使用 Pinia store
 const momentStore = useMomentStore()
+const isMobile = ref(window.innerWidth <= 768)
+const updateViewport = () => {
+  isMobile.value = window.innerWidth <= 768
+}
+const dialogWidth = computed(() => isMobile.value ? '100%' : '800px')
+const subDialogWidth = computed(() => isMobile.value ? '100%' : '400px')
+
+onMounted(() => {
+  window.addEventListener('resize', updateViewport)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', updateViewport)
+})
+
 const linkDialogVisible = ref(false)
 const imageDialogVisible = ref(false)
 const musicDialogVisible = ref(false)
@@ -849,18 +865,21 @@ const handleSubmit = async () => {
 
       .content-info {
         flex: 1;
+        min-width: 0;
 
         .preview-title {
           font-weight: 500;
           margin-bottom: 4px;
           display: flex;
           align-items: center;
+          flex-wrap: wrap;
         }
 
         .preview-url,
         .preview-artist {
           font-size: 12px;
           color: var(--admin-text-muted);
+          overflow-wrap: anywhere;
         }
       }
 
@@ -994,8 +1013,9 @@ const handleSubmit = async () => {
       border-radius: 4px;
     }
 
-    .music-preview-info {
-      flex: 1;
+      .music-preview-info {
+        flex: 1;
+        min-width: 0;
 
       .music-preview-title {
         font-weight: 500;
@@ -1023,6 +1043,31 @@ const handleSubmit = async () => {
       display: flex;
       gap: 8px;
       align-items: center;
+    }
+  }
+}
+
+.moment-form-dialog {
+  :deep(.el-dialog__body) {
+    overflow-y: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .moment-editor {
+    .toolbar {
+      gap: 8px;
+      padding: 12px 0;
+    }
+
+    .bottom-toolbar {
+      flex-wrap: wrap;
+      justify-content: flex-start;
+      gap: 8px;
+
+      .publish-status {
+        margin-left: auto;
+      }
     }
   }
 }

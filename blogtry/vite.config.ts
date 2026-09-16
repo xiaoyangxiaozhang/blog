@@ -25,5 +25,25 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, 'src')
     }
+  },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'https://admin.xiaoyangxiaozhang.xyz',
+        changeOrigin: true,
+        headers: {
+          origin: 'https://admin.xiaoyangxiaozhang.xyz'
+        },
+        secure: true
+      },
+      '/uploads': {
+        target: 'https://admin.xiaoyangxiaozhang.xyz',
+        changeOrigin: true,
+        headers: {
+          origin: 'https://admin.xiaoyangxiaozhang.xyz'
+        },
+        secure: true
+      }
+    }
   }
 })

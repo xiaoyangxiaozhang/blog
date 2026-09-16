@@ -14,7 +14,7 @@
     
       
    
-    <el-table-column label="内容" min-width="400">
+    <el-table-column label="内容" :min-width="isMobile ? 200 : 400">
       <template #default="{ row }">
         <div class="moment-content">
           <!-- 文本内容 -->
@@ -84,7 +84,7 @@
       </template>
     </el-table-column>
 
-    <el-table-column label="操作" width="180" align="center" fixed="right">
+    <el-table-column label="操作" :width="isMobile ? 120 : 180" align="center" fixed="right">
       <template #default="{ row }">
         <el-button type="primary" link size="small" @click="handleEdit(row.id)">编辑</el-button>
         <el-button type="danger" link size="small" @click="handleDelete(row.id)">删除</el-button>
@@ -98,7 +98,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 import CommonList from '@/components/common/CommonList.vue'
 import { useMomentStore } from '@/stores/moment'
 import { formatDateTime } from '@/utils/date'
@@ -111,6 +111,10 @@ const MUSIC_LABELS = {
 }
 // 使用 Pinia store
 const momentStore = useMomentStore()
+const isMobile = ref(window.innerWidth <= 768)
+const updateViewport = () => {
+  isMobile.value = window.innerWidth <= 768
+}
 // 获取视频平台名称
 const getVideoPlatformName = (platform?: string) => {
   if (!platform) return '本地视频'
@@ -143,7 +147,12 @@ const handleDelete = async (id: number) => {
 }
 
 onMounted(() => {
+  window.addEventListener('resize', updateViewport)
   momentStore.fetchMoments()
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', updateViewport)
 })
 </script>
 <style scoped lang="scss">
