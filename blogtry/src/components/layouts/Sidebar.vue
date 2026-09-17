@@ -38,6 +38,10 @@
             <i class="ri-image-edit-line ri-lg"></i>
             <template #title>社区设置</template>
           </el-menu-item>
+          <el-menu-item index="/kimidou/files">
+            <i class="ri-folder-image-line ri-lg"></i>
+            <template #title>社区文件</template>
+          </el-menu-item>
         </template>
       </el-sub-menu>
 

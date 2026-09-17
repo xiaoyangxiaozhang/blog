@@ -68,6 +68,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '社区设置', requiresAuth: true, module: 'kimidou', minimumRole: 'admin' }
       },
       {
+        path: '/kimidou/files',
+        name: 'kimidouFiles',
+        component: () => import('@/views/kimidou/KimidouFileList.vue'),
+        meta: { title: '社区文件', requiresAuth: true, module: 'kimidou', minimumRole: 'admin' }
+      },
+      {
         path: '/friends',
         name: 'friends',
         component: () => import('@/views/friend/FriendList.vue'),

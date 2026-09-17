@@ -31,6 +31,10 @@ export interface ImageCompressionResponse {
   replaced_references: number
 }
 
+export type FileScope = 'blog' | 'kimidou'
+
+const getFileBasePath = (scope: FileScope = 'blog') => scope === 'kimidou' ? '/admin/kimidou/files' : '/admin/files'
+
 interface ChunkUploadInitResponse {
   upload_id: string
   chunk_size: number
@@ -308,8 +312,8 @@ export async function uploadFile(file: File, type = 'image', options: UploadOpti
  * @param {FileListQuery} params - 查询参数
  * @returns {Promise<FileListData>} 文件列表
  */
-export function getFileList(params: FileListQuery): Promise<FileListData> {
-  return request.get("/admin/files", { params });
+export function getFileList(params: FileListQuery, scope: FileScope = 'blog'): Promise<FileListData> {
+	return request.get(getFileBasePath(scope), { params });
 }
 
 /**
@@ -317,13 +321,13 @@ export function getFileList(params: FileListQuery): Promise<FileListData> {
  * @param {number} id - 文件ID
  * @returns {Promise<void>} 
  */
-export function deleteFile(id: number): Promise<void> {
-  return request.delete(`/admin/files/${id}`);
+export function deleteFile(id: number, scope: FileScope = 'blog'): Promise<void> {
+	return request.delete(`${getFileBasePath(scope)}/${id}`);
 }
 
 /**
  * 在服务端压缩一张图片，并生成新的文件记录。
  */
-export function compressManagedImage(id: number, quality = 80, replaceReferences = false): Promise<ImageCompressionResponse> {
-  return request.post(`/admin/files/${id}/compress`, { quality, replace_references: replaceReferences }, { timeout: 0 })
+export function compressManagedImage(id: number, quality = 80, replaceReferences = false, scope: FileScope = 'blog'): Promise<ImageCompressionResponse> {
+	return request.post(`${getFileBasePath(scope)}/${id}/compress`, { quality, replace_references: replaceReferences }, { timeout: 0 })
 }

@@ -132,7 +132,6 @@ const blogForm = ref({
   // 全局样式
   favicon: '',
   background_image: '',
-  kimidou_cover: '',
   screenshot: '',
   theme_color: '#8183ff',
   announcement: '',
@@ -304,7 +303,6 @@ const loadBlogConfigs = async () => {
       // 全局样式
       favicon: configs.favicon || '',
       background_image: configs.background_image || '',
-      kimidou_cover: configs.kimidou_cover || '',
       screenshot: configs.screenshot || '',
       theme_color: configs.theme_color || '#8183ff',
       announcement: configs.announcement || '',
@@ -567,10 +565,6 @@ const handleSave = async () => {
         const uploadedUrl = await blogUploaders.backgroundUploaderRef.uploadPendingFile()
         if (uploadedUrl) blogForm.value.background_image = uploadedUrl
       }
-      if (blogUploaders.kimidouCoverUploaderRef?.getPendingCount()) {
-        const uploadedUrl = await blogUploaders.kimidouCoverUploaderRef.uploadPendingFile()
-        if (uploadedUrl) blogForm.value.kimidou_cover = uploadedUrl
-      }
       if (blogUploaders.screenshotUploaderRef?.getPendingCount()) {
         const uploadedUrl = await blogUploaders.screenshotUploaderRef.uploadPendingFile()
         if (uploadedUrl) blogForm.value.screenshot = uploadedUrl
@@ -605,7 +599,6 @@ const handleSave = async () => {
       'blog.established': blogForm.value.established,
       'blog.favicon': blogForm.value.favicon,
       'blog.background_image': blogForm.value.background_image,
-      'blog.kimidou_cover': blogForm.value.kimidou_cover,
       'blog.screenshot': blogForm.value.screenshot,
       'blog.theme_color': blogForm.value.theme_color,
       'blog.announcement': blogForm.value.announcement,

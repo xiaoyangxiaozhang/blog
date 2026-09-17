@@ -1,5 +1,5 @@
 <template>
-  <common-list title="文件管理" :data="fileList" :loading="loading" :total="total" :show-create="false"
+  <common-list :title="isKimidou ? '基米斗文件' : '文件管理'" :data="fileList" :loading="loading" :total="total" :show-create="false"
     v-model:page="query.page" v-model:page-size="query.page_size" @refresh="loadList" @update:page="loadList"
     @update:pageSize="loadList">
     <!-- 表格列 -->
@@ -51,13 +51,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import CommonList from '@/components/common/CommonList.vue'
-import { compressManagedImage, getFileList, deleteFile } from '@/api/file'
+import { compressManagedImage, getFileList, deleteFile, type FileScope } from '@/api/file'
 import type { FileInfo, FileListQuery } from '@/types/file'
 import { formatDateTime } from '@/utils/date'
 
+const props = withDefaults(defineProps<{ scope?: FileScope }>(), { scope: 'blog' })
+const isKimidou = computed(() => props.scope === 'kimidou')
 const query = reactive<FileListQuery>({ page: 1, page_size: 20 })
 const fileList = ref<FileInfo[]>([])
 const total = ref(0)
@@ -70,7 +72,7 @@ const loadList = async () => {
   const params = { ...query }
   loading.value = true
   try {
-     const data = await getFileList(params)
+     const data = await getFileList(params, props.scope)
 
     // 如果这不是最后一次请求，直接忽略返回结果
     if (requestId !== latestRequestId) return
@@ -96,7 +98,7 @@ const copyUrl = async (file: FileInfo) => {
 const handleDelete = async (id: number) => {
   try {
     await ElMessageBox.confirm('确定要删除这个文件吗？', '提示', { type: 'warning' })
-    await deleteFile(id)
+    await deleteFile(id, props.scope)
     ElMessage.success('删除成功')
     loadList()
   } catch (error) {
@@ -144,7 +146,7 @@ const handleCompress = async (file: FileInfo, replaceReferences = false) => {
     }
 
     compressingId.value = file.id
-    const result = await compressManagedImage(file.id, quality, replaceReferences)
+    const result = await compressManagedImage(file.id, quality, replaceReferences, props.scope)
     const replaceMessage = replaceReferences ? `，替换 ${result.replaced_references} 条引用` : ''
     ElMessage.success(`压缩完成，节省 ${result.saved_percent.toFixed(1)}%${replaceMessage}`)
     await loadList()
