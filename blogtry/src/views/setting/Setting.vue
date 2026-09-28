@@ -48,8 +48,8 @@
           <OAuthSettingsTab v-model:form="oauthForm" :loading="loading || !canEditSettings" />
         </el-tab-pane>
 
-        <!-- 微信公众号配置标签页 -->
-        <el-tab-pane label="微信公众号" name="wechat">
+        <!-- 微信与小程序配置标签页 -->
+        <el-tab-pane label="微信配置" name="wechat">
           <WeChatSettingsTab v-model:form="wechatForm" :loading="loading || !canEditSettings" />
         </el-tab-pane>
 
@@ -243,11 +243,13 @@ const oauthForm = ref({
   'microsoft.redirect_url': ''
 })
 
-// 微信公众号配置表单
+// 微信与小程序配置表单
 const wechatForm = ref({
   app_id: '',
   app_secret: '',
-  token_url: ''
+  token_url: '',
+  mini_app_id: '',
+  mini_app_secret: ''
 })
 
 // 通用配置加载函数
@@ -498,14 +500,16 @@ const loadOAuthConfigs = async () => {
   }
 }
 
-// 加载微信公众号配置
+// 加载微信与小程序配置
 const loadWeChatConfigs = async () => {
   try {
     const configs = await loadConfigs('wechat')
     Object.assign(wechatForm.value, {
       app_id: configs.app_id || '',
       app_secret: configs.app_secret || '',
-      token_url: configs.token_url || ''
+      token_url: configs.token_url || '',
+      mini_app_id: configs.mini_app_id || '',
+      mini_app_secret: configs.mini_app_secret || ''
     })
   } catch {
     ElMessage.error('获取微信配置失败')
@@ -535,6 +539,11 @@ const loadAllConfigs = async () => {
 const handleSave = async () => {
   if (!canEditSettings.value) {
     ElMessage.warning('仅超级管理员可修改系统配置')
+    return
+  }
+
+  if (basicTabRef.value && !(await basicTabRef.value.validate())) {
+    ElMessage.warning('请先修正基本配置中的备案号格式')
     return
   }
 
@@ -719,11 +728,13 @@ const handleSave = async () => {
       'oauth.microsoft.redirect_url': oauthForm.value['microsoft.redirect_url']
     }
 
-    // 微信公众号配置
+    // 微信与小程序配置
     const wechatPayload: Record<string, string> = {
       'wechat.app_id': wechatForm.value.app_id,
       'wechat.app_secret': wechatForm.value.app_secret,
-      'wechat.token_url': wechatForm.value.token_url
+      'wechat.token_url': wechatForm.value.token_url,
+      'wechat.mini_app_id': wechatForm.value.mini_app_id,
+      'wechat.mini_app_secret': wechatForm.value.mini_app_secret
     }
 
     // 构建需要保存的配置组列表

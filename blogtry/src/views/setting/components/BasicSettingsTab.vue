@@ -1,5 +1,5 @@
 <template>
-  <el-form :model="form" label-width="120px" class="setting-form">
+  <el-form ref="formRef" :model="form" :rules="rules" label-width="120px" class="setting-form">
     <el-divider content-position="left">站长信息</el-divider>
 
     <el-form-item label="站长姓名">
@@ -28,8 +28,8 @@
 
     <el-divider content-position="left">备案信息</el-divider>
 
-    <el-form-item label="ICP备案号">
-      <el-input v-model="form.icp" placeholder="ICP备案号" :disabled="loading" />
+    <el-form-item label="ICP备案号" prop="icp">
+      <el-input v-model="form.icp" placeholder="例如：京ICP备12345678号-1" :disabled="loading" />
     </el-form-item>
 
     <el-form-item label="公安备案号">
@@ -54,6 +54,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import type { FormInstance, FormRules } from 'element-plus'
 import ImageUploader from '@/components/common/ImageUploader.vue'
 
 interface BasicForm {
@@ -71,6 +72,21 @@ interface BasicForm {
 
 const form = defineModel<BasicForm>('form', { required: true })
 
+const formRef = ref<FormInstance>()
+const rules: FormRules = {
+  icp: [{
+    trigger: ['blur', 'change'],
+    validator: (_rule, value, callback) => {
+      const text = String(value || '').trim()
+      if (!text || /号-\d+$/.test(text)) {
+        callback()
+        return
+      }
+      callback(new Error('请填写完整备案号，格式应包含“号-数字”'))
+    }
+  }]
+}
+
 defineProps<{
   loading?: boolean
 }>()
@@ -82,7 +98,16 @@ const authorPhotoUploaderRef = ref<InstanceType<typeof ImageUploader>>()
 // 暴露给父组件使用
 defineExpose({
   authorAvatarUploaderRef,
-  authorPhotoUploaderRef
+  authorPhotoUploaderRef,
+  validate: async () => {
+    if (!formRef.value) return true
+    try {
+      await formRef.value.validate()
+      return true
+    } catch {
+      return false
+    }
+  }
 })
 </script>
 
