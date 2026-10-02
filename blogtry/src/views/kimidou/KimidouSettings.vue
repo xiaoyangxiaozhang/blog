@@ -6,6 +6,13 @@
       </template>
 
       <el-form label-width="90px">
+        <el-form-item label="开放社区">
+          <div>
+            <el-switch v-model="enabled" active-text="开放" inactive-text="关闭" :disabled="loading || saving" />
+            <p class="availability-note">关闭后导航不显示社区入口，直达链接返回 404；已有内容保留，管理员仍可管理并重新开放。</p>
+          </div>
+        </el-form-item>
+
         <el-form-item label="社区封面">
           <ImageUploader
             ref="coverUploader"
@@ -54,6 +61,7 @@ import { getKimidouSettings, updateKimidouSettings } from '@/api/kimidou'
 
 const cover = ref('')
 const description = ref('')
+const enabled = ref(false)
 const loading = ref(false)
 const saving = ref(false)
 const coverUploader = ref<InstanceType<typeof ImageUploader>>()
@@ -64,6 +72,7 @@ const loadSettings = async () => {
     const settings = await getKimidouSettings()
     cover.value = settings.cover || ''
     description.value = settings.description || ''
+    enabled.value = settings.enabled === true
   } catch (error: any) {
     ElMessage.error(error.message || '获取社区设置失败')
   } finally {
@@ -80,7 +89,7 @@ const saveSettings = async () => {
     }
     cover.value = cover.value.trim()
     description.value = description.value.trim()
-    await updateKimidouSettings({ cover: cover.value, description: description.value })
+    await updateKimidouSettings({ cover: cover.value, description: description.value, enabled: enabled.value })
     ElMessage.success('社区设置已保存')
   } catch (error: any) {
     ElMessage.error(error.message || '保存社区设置失败')
@@ -101,5 +110,11 @@ onMounted(loadSettings)
   display: block;
   width: 320px;
   margin-top: 12px;
+}
+
+.availability-note {
+  margin: 6px 0 0;
+  color: var(--el-text-color-secondary);
+  line-height: 1.5;
 }
 </style>

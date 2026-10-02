@@ -69,6 +69,7 @@ export const restoreKimidouUser = (id: number): Promise<void> =>
 export interface KimidouSettings {
   cover: string
   description: string
+  enabled: boolean
 }
 
 export const getKimidouSettings = (): Promise<KimidouSettings> =>
