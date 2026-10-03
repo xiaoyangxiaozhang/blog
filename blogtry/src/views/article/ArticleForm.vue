@@ -110,7 +110,8 @@
 
         <div class="form-row">
           <el-form-item label="发布地点" prop="location" class="form-col">
-            <el-input v-model="formData.location" placeholder="请输入发布地点" clearable />
+            <el-input v-model="formData.location" :placeholder="locating ? '正在获取地点，可手动填写' : '请输入发布地点，可修改或清空'"
+              clearable @input="cancelLocation" @clear="cancelLocation" :aria-busy="locating" />
           </el-form-item>
 
           <div class="form-col form-switches">
@@ -178,6 +179,7 @@ import { uploadFile } from '@/api/file'
 import { generateAISummary, generateSummary, generateTitle } from '@/api/ai'
 import { parseBackendDate, formatForBackend } from '@/utils/date'
 import { useDebounceFn } from '@vueuse/core'
+import { useAutoLocation } from '@/composables/useAutoLocation'
 import ImageUploader from '@/components/common/ImageUploader.vue'
 import CodeMirrorEditor from './components/CodeMirrorEditor.vue'
 import CoverMakerDialog from './components/CoverMakerDialog.vue'
@@ -287,6 +289,14 @@ const originalData = reactive({
   publish_time: null as Date | null,
   update_time: null as Date | null
 })
+
+const { locating, fill: fillLocation, cancel: cancelLocation, wait: waitForLocation } = useAutoLocation(
+  location => {
+    formData.location = location
+    originalData.location = location
+  },
+  () => !isEdit.value && !isSaved.value && !formData.location
+)
 
 // 表单验证规则
 const formRules: FormRules = {
@@ -446,6 +456,8 @@ const handleSave = async (autoRedirect: boolean = true) => {
       ElMessage.error('请输入文章内容')
       return
     }
+
+    await waitForLocation()
 
     // 处理封面：优先级为 在线图片 > 制作封面文件 > 上传器文件
     try {
@@ -796,7 +808,10 @@ const initData = async () => {
   }
 }
 
-onMounted(initData)
+onMounted(() => {
+  if (!isEdit.value) void fillLocation()
+  void initData()
+})
 
 // 组件卸载时设置标志，防止防抖延迟执行时创建草稿
 onUnmounted(() => {

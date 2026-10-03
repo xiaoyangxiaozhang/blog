@@ -116,7 +116,7 @@
         <!-- 位置按钮 -->
         <el-button :type="formData.content.location ? 'primary' : 'default'" :icon="Location" text
           @click="locationDialogVisible = true">
-          {{ formData.content.location || '发布位置' }}
+          {{ formData.content.location || (locating ? '正在获取位置…' : '发布位置') }}
         </el-button>
 
         <!-- 标签按钮 -->
@@ -276,7 +276,8 @@
   <!-- 位置Dialog -->
   <el-dialog v-model="locationDialogVisible" title="发布位置" :width="subDialogWidth">
     <div class="location-form">
-      <el-input v-model="formData.content.location" placeholder="输入位置信息" maxlength="100" show-word-limit />
+      <el-input v-model="formData.content.location" :placeholder="locating ? '正在获取位置，可手动填写' : '输入位置信息，可修改或清空'"
+        maxlength="100" show-word-limit clearable @input="cancelLocation" @clear="cancelLocation" :aria-busy="locating" />
       <div style="margin-top: 12px; font-size: 12px; color: var(--admin-text-muted);">
         可以输入具体地址、城市或地标名称
       </div>
@@ -303,6 +304,7 @@ import { formatForBackend, formatTime } from '@/utils/date'
 import { fetchLinkInfo, parseVideo } from '@/api/tools'
 import { ElMessage } from 'element-plus'
 import { uploadFile } from '@/api/file'
+import { useAutoLocation } from '@/composables/useAutoLocation'
 
 // 使用 Pinia store
 const momentStore = useMomentStore()
@@ -354,6 +356,10 @@ interface ImageItem {
   file?: File
   url: string
 }
+const { locating, fill: fillLocation, cancel: cancelLocation, wait: waitForLocation } = useAutoLocation(
+  location => { formData.content.location = location },
+  () => momentStore.dialogVisible && !momentStore.currentMoment && !formData.content.location
+)
 const imageItems = ref<ImageItem[]>([])
 // 视频数据项
 interface VideoItem {
@@ -549,6 +555,7 @@ const otherContentPreviews = computed(() => {
 })
 // 重置表单
 const resetForm = () => {
+  cancelLocation()
   // 清理所有 Blob URLs
   imageItems.value.forEach(cleanupBlobUrl)
   imageItems.value = []
@@ -582,7 +589,11 @@ const resetForm = () => {
   timeDialogVisible.value = false
 }
 
-watch(() => momentStore.currentMoment, (moment) => {
+watch(() => [momentStore.dialogVisible, momentStore.currentMoment] as const, ([visible, moment]) => {
+  if (!visible) {
+    cancelLocation()
+    return
+  }
   resetForm()
   if (moment) {
     Object.assign(formData.content, moment.content)
@@ -607,6 +618,8 @@ watch(() => momentStore.currentMoment, (moment) => {
         video_id: moment.content.video.video_id
       }
     }
+  } else {
+    void fillLocation()
   }
 }, { immediate: true })
 // 上传图片（本地文件上传，网络图片直接使用）
@@ -702,6 +715,8 @@ const handleCancel = () => {
 const handleSubmit = async () => {
   submitLoading.value = true
   try {
+    await waitForLocation()
+
     // 上传图片
     const uploadedImages = imageItems.value.length ? await uploadImages() : []
 

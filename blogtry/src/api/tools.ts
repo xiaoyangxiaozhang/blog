@@ -1,6 +1,10 @@
 import request from '@/utils/request'
 import type { FetchLinkRequest, LinkInfo, ParseVideoRequest, VideoInfo } from '@/types/tools'
 
+export function getCurrentLocation(): Promise<{ location: string }> {
+  return request.get('/admin/tools/location')
+}
+
 /**
  * 工具API模块 - 用于视频解析、链接元数据获取等通用工具功能
  */
