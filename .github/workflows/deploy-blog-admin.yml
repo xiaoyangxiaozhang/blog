@@ -34,6 +34,10 @@ jobs:
         working-directory: blogtry
         run: npm ci
 
+      - name: Run session regression tests
+        working-directory: blogtry
+        run: npm test
+
       - name: Build admin frontend
         working-directory: blogtry
         run: npm run build

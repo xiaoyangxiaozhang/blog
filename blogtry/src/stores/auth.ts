@@ -16,6 +16,7 @@ export const useAuthStore = defineStore('auth', () => {
   let refreshPromise: Promise<boolean> | null = null
   let restorePromise: Promise<boolean> | null = null
   let restoreAttempted = false
+  let sessionVersion = 0
 
   const clearLegacyAuthStorage = (): void => {
     localStorage.removeItem(ACCESS_TOKEN_KEY)
@@ -30,6 +31,10 @@ export const useAuthStore = defineStore('auth', () => {
   }
   
   const setTokens = (token: string): void => {
+    sessionVersion += 1
+    refreshPromise = null
+    restorePromise = null
+    clearUserInfo()
     redirectingToLogin.value = false
     restoreAttempted = true
     accessToken.value = token
@@ -61,7 +66,7 @@ export const useAuthStore = defineStore('auth', () => {
       if (typeof user.can_post_moments !== 'boolean') {
         user.can_post_moments = false
       }
-      if (!user.is_enabled) {
+      if (typeof user.is_enabled !== 'boolean') {
         user.is_enabled = true
       }
       if (!user.last_login) {
@@ -144,19 +149,21 @@ export const useAuthStore = defineStore('auth', () => {
 
   const refreshAccessToken = async (): Promise<boolean> => {
     if (refreshPromise) return refreshPromise
+    const version = sessionVersion
 
     refreshPromise = (async () => {
       clearLegacyAuthStorage()
       try {
         const { refreshToken } = await import('@/api/user')
         const data = await refreshToken()
+        if (version !== sessionVersion) return false
         setAccessToken(data.access_token)
         return true
       } catch {
-        accessToken.value = null
+        if (version === sessionVersion) accessToken.value = null
         return false
       } finally {
-        refreshPromise = null
+        if (version === sessionVersion) refreshPromise = null
       }
     })()
 
@@ -169,20 +176,22 @@ export const useAuthStore = defineStore('auth', () => {
     if (restoreAttempted) return false
 
     restoreAttempted = true
+    const version = sessionVersion
 
     restorePromise = (async () => {
       try {
         if (!await refreshAccessToken()) {
-          clearAuthState()
+          if (version === sessionVersion) clearAuthState()
           return false
         }
+        if (version !== sessionVersion) return false
         await fetchUserInfo()
-        return true
+        return version === sessionVersion
       } catch {
-        clearAuthState()
+        if (version === sessionVersion) clearAuthState()
         return false
       } finally {
-        restorePromise = null
+        if (version === sessionVersion) restorePromise = null
       }
     })()
 
@@ -212,6 +221,10 @@ export const useAuthStore = defineStore('auth', () => {
   }
   
   const clearAuthState = (): void => {
+    sessionVersion += 1
+    refreshPromise = null
+    restorePromise = null
+    restoreAttempted = true
     removeTokens()
     clearUserInfo()
   }
@@ -238,6 +251,7 @@ export const useAuthStore = defineStore('auth', () => {
     currentUser,
     // 方法
     getAccessToken,
+    getSessionVersion: () => sessionVersion,
     setTokens,
     setAccessToken,
     removeTokens,

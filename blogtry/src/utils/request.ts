@@ -8,6 +8,8 @@ interface ApiResponse<T = any> {
   message: string
 }
 
+type AuthRequestConfig = InternalAxiosRequestConfig & { _retry?: boolean; _authSession?: number }
+
 // 获取 API URL（优先使用运行时配置）
 const getApiUrl = () => {
   // @ts-ignore
@@ -22,35 +24,16 @@ const request = axios.create({
   withCredentials: true
 })
 
-// 是否正在刷新token的标志
-let isRefreshing = false
-// 存储待重试的请求
-let failedQueue: Array<{
-  resolve: (value?: any) => void
-  reject: (reason?: any) => void
-}> = []
-
-// 处理队列中的请求
-const processQueue = (error: any = null) => {
-  failedQueue.forEach(promise => {
-    if (error) {
-      promise.reject(error)
-    } else {
-      promise.resolve()
-    }
-  })
-  failedQueue = []
-}
-
 // 请求拦截器
 request.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+  const authStore = useAuthStore()
+  ;(config as AuthRequestConfig)._authSession = authStore.getSessionVersion()
   // refresh接口只使用HttpOnly Cookie，不带Authorization header。
   if (config.url === '/auth/refresh') {
     return config
   }
   
   // 其他接口带上access token
-  const authStore = useAuthStore()
   const token = authStore.getAccessToken()
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
@@ -61,6 +44,9 @@ request.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 // 响应拦截器
 request.interceptors.response.use(
   (response: AxiosResponse<ApiResponse>) => {
+    if ((response.config as AuthRequestConfig)._authSession !== useAuthStore().getSessionVersion()) {
+      return Promise.reject(new Error('登录会话已切换'))
+    }
     // blob 类型直接返回
     if (response.config.responseType === 'blob') {
       return response.data
@@ -71,8 +57,11 @@ request.interceptors.response.use(
     return code === 0 ? safeData : Promise.reject(new Error(message || '请求失败'))
   },
   async (error: AxiosError) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
+    const originalRequest = error.config as AuthRequestConfig | undefined
     const authStore = useAuthStore()
+    if (!originalRequest || originalRequest._authSession !== authStore.getSessionVersion()) {
+      return Promise.reject(error)
+    }
     
     // 处理 blob 请求的错误响应（后端返回 JSON 错误）
     if (originalRequest.responseType === 'blob' && error.response?.data instanceof Blob) {
@@ -92,42 +81,16 @@ request.interceptors.response.use(
 
     // 处理401未授权 - 尝试刷新token
     if (error.response?.status === 401 && !originalRequest._retry) {
-      if (isRefreshing) {
-        // 如果正在刷新，将请求加入队列
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject })
-        }).then(() => {
-          return request(originalRequest)
-        }).catch(err => {
-          return Promise.reject(err)
-        })
-      }
-
       originalRequest._retry = true
-      isRefreshing = true
-
-      try {
-        // 清除当前失效的内存 token，再使用 HttpOnly Cookie 刷新。
-        authStore.removeTokens()
-        if (!await authStore.refreshAccessToken()) {
-          processQueue(error)
-          authStore.redirectToLogin()
-          return Promise.reject(error)
-        }
-        
-        // 处理队列中的请求
-        processQueue()
-        
-        // 重试原请求
-        return request(originalRequest)
-      } catch (refreshError) {
-        // 刷新失败，清空队列并跳转登录页
-        processQueue(refreshError)
+      const version = authStore.getSessionVersion()
+      // Store 已提供刷新请求复用；重试也必须属于原来的会话。
+      const refreshed = await authStore.refreshAccessToken()
+      if (version !== authStore.getSessionVersion()) return Promise.reject(error)
+      if (!refreshed) {
         authStore.redirectToLogin()
-        return Promise.reject(refreshError)
-      } finally {
-        isRefreshing = false
+        return Promise.reject(error)
       }
+      return request(originalRequest)
     }
     
     // 其他错误直接返回
