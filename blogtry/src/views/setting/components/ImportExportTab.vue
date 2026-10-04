@@ -156,7 +156,7 @@ const handleArticleImport = async () => {
       ElMessage.error('导入失败')
     }
   } catch (error: any) {
-    ElMessage.error(error.message || '导入失败')
+    ElMessage.error(error.response?.data?.message || error.message || '导入失败')
   } finally {
     articleUploading.value = false
   }
