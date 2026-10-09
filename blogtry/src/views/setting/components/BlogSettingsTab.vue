@@ -55,6 +55,13 @@
       </el-form-item>
     </div>
 
+    <el-form-item label="动态页封面">
+      <ImageUploader ref="dynamicCoverUploaderRef" v-model="form.dynamic_cover" upload-type="动态页封面" width="213px"
+        height="120px" :disabled="loading" />
+      <el-input v-model="form.dynamic_cover" placeholder="可直接填写图片地址，留空时使用默认压缩图片" clearable
+        :disabled="loading" class="background-url-input" />
+    </el-form-item>
+
     <el-form-item label="侧边栏公告">
       <el-input v-model="form.announcement" type="textarea" :rows="4" placeholder="支持多行文案和简单 HTML"
         :disabled="loading" />
@@ -288,6 +295,7 @@ interface BlogFormData {
   // 全局样式
   favicon: string
   background_image: string
+  dynamic_cover: string
   screenshot: string
   theme_color: string
   announcement: string
@@ -338,6 +346,7 @@ defineProps<{
 // 图片上传器引用
 const faviconUploaderRef = ref<InstanceType<typeof ImageUploader>>()
 const backgroundUploaderRef = ref<InstanceType<typeof ImageUploader>>()
+const dynamicCoverUploaderRef = ref<InstanceType<typeof ImageUploader>>()
 const screenshotUploaderRef = ref<InstanceType<typeof ImageUploader>>()
 const aboutExhibitionUploaderRef = ref<InstanceType<typeof ImageUploader>>()
 
@@ -426,6 +435,7 @@ const handleFontSiteCommand = (url: string) => {
 defineExpose({
   faviconUploaderRef,
   backgroundUploaderRef,
+  dynamicCoverUploaderRef,
   screenshotUploaderRef,
   aboutExhibitionUploaderRef
 })
