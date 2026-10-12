@@ -57,7 +57,7 @@
             >
                 <template #default>
                     <div v-if="isMobile" class="mobile-page-selector">
-                        <el-input-number :model-value="page" :min="1" :max="mobilePageCount" :controls="false"
+                        <el-input-number v-model="mobilePage" :min="1" :max="mobilePageCount" :controls="false"
                             aria-label="页码" @change="handleMobilePageChange" />
                         <span>/ {{ mobilePageCount }} 页</span>
                     </div>
@@ -123,8 +123,10 @@ const emit = defineEmits<{
     'update:pageSize': [size: number]
 }>()
 const mobilePageCount = computed(() => Math.max(1, Math.ceil(props.total / props.pageSize)))
-const handleMobilePageChange = (page: number | undefined) => {
-    if (page !== undefined) emit('update:page', page)
+const mobilePage = ref<number | null | undefined>(props.page)
+watch(() => props.page, page => { mobilePage.value = page })
+const handleMobilePageChange = (page: number | null | undefined) => {
+    if (typeof page === 'number') emit('update:page', page)
 }
 // 自动计算虚拟表格宽高 (如果传入 'auto' 或未传入具体数字)
 const tableWrapperRef = ref<HTMLElement>()
