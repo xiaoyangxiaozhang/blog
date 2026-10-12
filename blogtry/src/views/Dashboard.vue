@@ -1149,7 +1149,7 @@ onUnmounted(() => {
     .charts-section {
       .chart-header { height: auto; min-height: 44px; gap: 8px; }
       .chart-container { min-height: 240px; }
-      .calendar-container { min-width: 640px; height: 300px; }
+      .calendar-scroll .calendar-container { min-width: 640px; height: 320px; min-height: 320px; }
       :deep(.el-radio-button__inner) { min-height: 44px; display: inline-flex; align-items: center; }
     }
     .calendar-hint { display: block; margin: 0 0 8px; font-size: 12px; color: var(--admin-text-muted); }

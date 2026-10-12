@@ -49,12 +49,20 @@
                 :current-page="page"
                 :page-sizes="[10, 20, 30, 40]"
                 :page-size="pageSize"
-                :layout="isMobile ? 'prev, pager, next' : 'total, sizes, prev, pager, next, jumper'"
+                :layout="isMobile ? 'prev, slot, next' : 'total, sizes, prev, pager, next, jumper'"
                 :pager-count="isMobile ? 5 : 7"
                 :total="total"
                 @current-change="$emit('update:page', $event)"
                 @size-change="$emit('update:pageSize', $event)"
-            />
+            >
+                <template #default>
+                    <div v-if="isMobile" class="mobile-page-selector">
+                        <el-input-number :model-value="page" :min="1" :max="mobilePageCount" :controls="false"
+                            aria-label="页码" @change="handleMobilePageChange" />
+                        <span>/ {{ mobilePageCount }} 页</span>
+                    </div>
+                </template>
+            </el-pagination>
         
        </div>
       </el-card>
@@ -108,12 +116,16 @@ const props=withDefaults(defineProps<{
     headerHeight: 48,
 })
 
-defineEmits<{
+const emit = defineEmits<{
     create: []
     refresh: []
     'update:page': [page: number]
     'update:pageSize': [size: number]
 }>()
+const mobilePageCount = computed(() => Math.max(1, Math.ceil(props.total / props.pageSize)))
+const handleMobilePageChange = (page: number | undefined) => {
+    if (page !== undefined) emit('update:page', page)
+}
 // 自动计算虚拟表格宽高 (如果传入 'auto' 或未传入具体数字)
 const tableWrapperRef = ref<HTMLElement>()
 const autoWidth = ref(700)
@@ -247,6 +259,16 @@ watch(
             :deep(.el-pagination) { --el-pagination-button-height: 44px; }
             :deep(.el-pager li) { min-width: 44px; }
         }
+    }
+
+    .mobile-page-selector {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        :deep(.el-input-number) { width: 68px; }
+        :deep(.el-input__wrapper) { min-height: 44px; }
+        :deep(input) { font-size: 16px; }
+        span { color: var(--admin-text-muted); font-size: 13px; }
     }
 
     @media (max-width: 768px) {

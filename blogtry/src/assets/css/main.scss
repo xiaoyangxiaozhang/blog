@@ -125,7 +125,8 @@ button:focus-visible, [role='button']:focus-visible {
       white-space: normal;
     }
     .el-form-item__content { margin-left: 0 !important; min-width: 0; gap: 8px; overflow-wrap: anywhere; }
-    .el-col { flex: 0 0 100%; max-width: 100%; }
+    .el-row { width: 100%; margin-left: 0 !important; margin-right: 0 !important; }
+    .el-col { flex: 0 0 100%; max-width: 100%; padding-left: 0 !important; padding-right: 0 !important; }
     .el-input, .el-select, .el-input-number, .el-date-editor { max-width: 100%; }
     .el-input__wrapper, .el-select__wrapper { min-height: 44px; }
     input, textarea { font-size: 16px; }

@@ -99,8 +99,12 @@
     </component>
     <div style="margin-top: 16px; display: flex; justify-content: flex-end;">
       <el-pagination v-model:current-page="subscriberQuery.page" v-model:page-size="subscriberQuery.page_size"
-        :total="subscriberTotal" :page-sizes="[10, 20, 50]" :layout="isMobile ? 'prev, pager, next' : 'total, sizes, prev, pager, next'" :pager-count="isMobile ? 5 : 7"
-        @current-change="fetchSubscribers" @size-change="fetchSubscribers" />
+        :total="subscriberTotal" :page-sizes="[10, 20, 50]" :layout="isMobile ? 'prev, slot, next' : 'total, sizes, prev, pager, next'"
+        @current-change="fetchSubscribers" @size-change="fetchSubscribers">
+        <template #default>
+          <span v-if="isMobile">{{ subscriberQuery.page }} / {{ Math.max(1, Math.ceil(subscriberTotal / subscriberQuery.page_size)) }} 页</span>
+        </template>
+      </el-pagination>
     </div>
   </el-dialog>
 </template>
