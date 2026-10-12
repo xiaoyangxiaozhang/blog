@@ -875,7 +875,7 @@ onMounted(() => {
   .system-settings {
     height: auto;
     :deep(.el-card) { height: auto; overflow: visible; }
-    :deep(.el-card__body) { overflow: visible; }
+    :deep(.el-card .el-card__body) { overflow: visible; }
   }
   .toolbar {
     position: sticky;

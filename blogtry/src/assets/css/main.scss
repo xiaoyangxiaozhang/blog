@@ -148,6 +148,8 @@ button:focus-visible, [role='button']:focus-visible {
   .el-dialog .el-pager li { min-width: 44px; }
   .admin-main-shell .el-segmented { max-width: 100%; --el-segmented-item-min-height: 44px; }
   .el-popper { max-width: calc(100vw - 24px); }
+  .el-picker__popper .el-date-picker { width: min(322px, calc(100vw - 26px)); }
+  .el-date-picker .el-picker-panel__content { width: auto; }
   .el-select-dropdown__item { min-height: 44px; display: flex; align-items: center; }
 }
 
