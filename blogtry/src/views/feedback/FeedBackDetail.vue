@@ -10,7 +10,7 @@
 
       <div v-if="feedbackStore.currentFeedback" class="feedback-detail">
         <!-- 基本信息 -->
-        <el-descriptions title="基本信息" :column="2" border>
+        <el-descriptions title="基本信息" :column="isMobile ? 1 : 2" border>
           <el-descriptions-item label="工单号">
             {{ feedbackStore.currentFeedback.ticket_no }}
           </el-descriptions-item>
@@ -266,6 +266,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useMediaQuery } from '@vueuse/core'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useFeedbackStore } from '@/stores/feedback'
@@ -273,6 +274,7 @@ import type { Feedback, FeedbackStatus, ReportType } from '@/types/feedback'
 import { formatDate } from '@/utils/date'
 
 const route = useRoute()
+const isMobile = useMediaQuery('(max-width: 768px)')
 const router = useRouter()
 const feedbackStore = useFeedbackStore()
 const submitting = ref(false)
@@ -530,6 +532,16 @@ onMounted(() => {
         margin-bottom: 16px;
       }
     }
+  }
+}
+@media (max-width: 768px) {
+  .feedback-detail-page {
+    .card-header { flex-wrap: wrap; gap: 12px; }
+    .card-header .title, .feedback-detail { min-width: 0; overflow-wrap: anywhere; }
+    :deep(.el-button) { min-height: 44px; }
+    :deep(.el-descriptions__table) { table-layout: fixed; }
+    :deep(.el-descriptions__label) { width: 80px; }
+    :deep(.el-descriptions__content) { overflow-wrap: anywhere; }
   }
 }
 </style>

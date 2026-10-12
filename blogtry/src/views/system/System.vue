@@ -551,6 +551,14 @@ onUnmounted(() => {
 }
 
 @media (max-width: 768px) {
+  .system-info {
+    height: auto;
+    :deep(.el-card) { height: auto; }
+  }
+  .info-content { overflow: visible; }
+  .info-grid { gap: 12px; }
+  .info-item { align-items: flex-start; }
+  .info-item .value, .info-item .version-value-wrapper { min-width: 0; }
   .toolbar {
     h2 {
       font-size: 18px;

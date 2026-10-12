@@ -872,7 +872,17 @@ onMounted(() => {
 
 // 移动端适配
 @media (max-width: 768px) {
+  .system-settings {
+    height: auto;
+    :deep(.el-card) { height: auto; overflow: visible; }
+    :deep(.el-card__body) { overflow: visible; }
+  }
   .toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding: 12px 0;
+    background: var(--admin-surface);
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
@@ -886,11 +896,15 @@ onMounted(() => {
 
       .el-button {
         flex: 1;
+        min-height: 44px;
+        margin-left: 0;
       }
     }
   }
 
   .setting-tabs {
+    overflow: visible;
+    :deep(.el-tabs__content) { overflow: visible; }
     :deep(.el-tabs__nav-wrap) {
       justify-content: flex-start;
     }
@@ -906,29 +920,21 @@ onMounted(() => {
     }
 
     :deep(.el-tabs__nav-wrap.is-scrollable) {
-      padding: 0;
+      padding: 0 24px;
     }
 
     :deep(.el-tab-pane) {
-      padding: 0 8px;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-
-      &::-webkit-scrollbar {
-        display: none;
-      }
+      height: auto;
+      padding: 0;
+      overflow: visible;
 
       .setting-form {
-        max-width: none;
-        min-width: 800px;
+        max-width: 100%;
+        min-width: 0;
       }
     }
   }
 
-  :deep(.el-form-item__label) {
-    width: 120px !important;
-    flex-shrink: 0;
-  }
+  :deep(.el-tabs__nav-prev), :deep(.el-tabs__nav-next) { line-height: 44px; }
 }
 </style>

@@ -35,7 +35,7 @@
     <!-- 中间区域统计信息 -->
      
       <el-row :gutter="20" class="overview-cards">
-        <el-col :xs="24" :sm="12" :md="12" :lg="6" :xl="6">
+        <el-col :xs="12" :sm="12" :md="12" :lg="6" :xl="6">
          <el-card class="overview-card" shadow="hover">
            <div class="card-left">
             <div class="card-icon icon-purple">
@@ -63,7 +63,7 @@
 
          </el-card>
         </el-col>
-        <el-col :xs="24" :sm="12" :md="12" :lg="6" :xl="6">
+        <el-col :xs="12" :sm="12" :md="12" :lg="6" :xl="6">
         <el-card class="overview-card" shadow="hover">
           <div class="card-left">
             <div class="card-icon icon-blue">
@@ -91,7 +91,7 @@
         </el-card>
       </el-col>
 
-      <el-col :xs="24" :sm="12" :md="12" :lg="6" :xl="6">
+      <el-col :xs="12" :sm="12" :md="12" :lg="6" :xl="6">
         <el-card class="overview-card" shadow="hover">
           <div class="card-left">
             <div class="card-icon icon-green">
@@ -119,7 +119,7 @@
         </el-card>
       </el-col>
 
-      <el-col :xs="24" :sm="12" :md="12" :lg="6" :xl="6">
+      <el-col :xs="12" :sm="12" :md="12" :lg="6" :xl="6">
         <el-card class="overview-card" shadow="hover">
           <div class="card-left">
             <div class="card-icon icon-orange">
@@ -198,7 +198,10 @@
               </el-select>
             </div>
           </template>
-          <div ref="calendarChartRef" class="chart-container"></div>
+          <p class="calendar-hint">左右滑动查看全年贡献</p>
+          <div class="calendar-scroll" role="region" aria-label="全年文章贡献" tabindex="0">
+            <div ref="calendarChartRef" class="chart-container calendar-container"></div>
+          </div>
         </el-card>
       </el-col>
     </el-row>
@@ -211,30 +214,30 @@
       </template>
       <div class="quick-access-content">
         <div class="quick-links">
-          <div class="link-item" @click="openLink('')">
+          <button type="button" class="link-item" @click="openLink('')">
             <span class="link-text">主页</span>
             <el-icon class="link-icon">
               <Right />
             </el-icon>
-          </div>
-          <div class="link-item" @click="openLink('')">
+          </button>
+          <button type="button" class="link-item" @click="openLink('')">
             <span class="link-text">博客</span>
             <el-icon class="link-icon">
               <Right />
             </el-icon>
-          </div>
-          <div class="link-item" @click="openLink('')">
+          </button>
+          <button type="button" class="link-item" @click="openLink('')">
             <span class="link-text">GitHub</span>
             <el-icon class="link-icon">
               <Right />
             </el-icon>
-          </div>
-          <div class="link-item" @click="openLink('')">
+          </button>
+          <button type="button" class="link-item" @click="openLink('')">
             <span class="link-text">文档</span>
             <el-icon class="link-icon">
               <Right />
             </el-icon>
-          </div>
+          </button>
         </div>
         <div class="quick-illustration">
           <img src="@/assets/img/dashboard.png" alt="dashboard">
@@ -847,7 +850,7 @@ onUnmounted(() => {
     }
 
     .overview-card {
-      transition: all 0.3s;
+      transition: border-color 0.3s, box-shadow 0.3s;
       border-radius: var(--admin-radius-card) !important;
       :deep(.el-card__body) {
         padding: 16px;
@@ -964,7 +967,7 @@ onUnmounted(() => {
     .chart-container {
       width: 100%;
       height: 320px;
-      min-width: 300px;
+      min-width: 0;
       min-height: 300px;
     }
 
@@ -1009,6 +1012,8 @@ onUnmounted(() => {
         max-width: 500px;
 
         .link-item {
+          font: inherit;
+          min-height: 44px;
           padding: 16px 20px;
           background: var(--admin-surface-soft);
           border: 1px solid var(--admin-border-soft);
@@ -1050,6 +1055,10 @@ onUnmounted(() => {
       }
     }
   }
+
+  .calendar-hint { display: none; }
+  .calendar-scroll { overflow-x: auto; }
+  .calendar-scroll:focus-visible { outline: 2px solid var(--admin-brand); outline-offset: 2px; }
 
   // 移动端优化（<992px）
   @media (max-width: 991px) {
@@ -1126,6 +1135,27 @@ onUnmounted(() => {
 
   // 小屏幕优化（<768px）
   @media (max-width: 767px) {
+    .top-card .top-content {
+      .profile-section, .profile-info { min-width: 0; }
+      .profile-section { width: 100%; gap: 12px; }
+      .stats-section { gap: 12px; }
+    }
+    .overview-cards .overview-card {
+      :deep(.el-card__body) { flex-direction: column; align-items: flex-start; gap: 8px; padding: 12px; }
+      .card-left .card-icon { width: 32px; height: 32px; font-size: 18px; }
+      .card-right { width: 100%; }
+      .card-right .card-stats { flex-wrap: wrap; gap: 4px; }
+    }
+    .charts-section {
+      .chart-header { height: auto; min-height: 44px; gap: 8px; }
+      .chart-container { min-height: 240px; }
+      .calendar-container { min-width: 640px; height: 300px; }
+      :deep(.el-radio-button__inner) { min-height: 44px; display: inline-flex; align-items: center; }
+    }
+    .calendar-hint { display: block; margin: 0 0 8px; font-size: 12px; color: var(--admin-text-muted); }
+    .quick-access-card .quick-access-content { padding: 0; width: 100%; }
+    .quick-access-card .quick-access-content .quick-links { width: 100%; min-width: 0; gap: 12px; }
+    .quick-access-card .quick-access-content .quick-links .link-item { padding: 12px; }
     .top-content {
       .stats-section {
         .stat-item {

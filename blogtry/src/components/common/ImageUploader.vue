@@ -11,11 +11,11 @@
         </div>
       </el-upload>
 
-      <div v-if="imageUrl && !disabled" class="delete-btn" @click.stop="handleDelete" title="删除">
+      <button v-if="imageUrl && !disabled" type="button" class="delete-btn" @click.stop="handleDelete" aria-label="移除图片">
         <el-icon>
           <Delete />
         </el-icon>
-      </div>
+      </button>
 
       <div v-if="uploading || uploadError" class="upload-progress" @click.stop>
         <div class="upload-progress-track">
@@ -444,8 +444,9 @@ onUnmounted(() => {
       justify-content: center;
       cursor: pointer;
       background: rgba(0, 0, 0, 0.5);
+      border: 0;
       border-radius: 4px;
-      transition: all 0.2s;
+      transition: background-color 0.2s, transform 0.2s;
 
       .el-icon {
         color: #fff;
@@ -552,7 +553,7 @@ onUnmounted(() => {
   .crop-dialog-mask {
     position: fixed;
     inset: 0;
-    z-index: 3000;
+    z-index: calc(var(--el-index-popper, 2000) + 100);
     display: flex;
     align-items: center;
     justify-content: center;

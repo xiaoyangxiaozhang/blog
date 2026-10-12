@@ -109,6 +109,7 @@ onMounted(loadSettings)
 .cover-url-input {
   display: block;
   width: 320px;
+  max-width: 100%;
   margin-top: 12px;
 }
 

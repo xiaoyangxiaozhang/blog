@@ -9,18 +9,22 @@
      <!-- 功能工具栏 -->
       <div class="toolbar">
      <el-button :type="formData.content.link?.url ? 'primary' : 'default'" :icon="Link" circle
+          aria-label="网站分享"
           @click="linkDialogVisible = true" />
 
         <!-- 图片按钮 -->
         <el-button :type="imageItems.length ? 'primary' : 'default'" :icon="Picture" circle
+          aria-label="动态配图"
           @click="imageDialogVisible = true" />
 
         <!-- 音乐按钮 -->
         <el-button :type="formData.content.music?.id ? 'primary' : 'default'" :icon="Headset" circle
+          aria-label="动态音乐"
           @click="musicDialogVisible = true" />
 
         <!-- 视频按钮 -->
         <el-button :type="videoItem ? 'primary' : 'default'" :icon="VideoPlay" circle
+          aria-label="动态视频"
           @click="videoDialogVisible = true" />
         </div>
          <!-- 文本输入区域 -->
@@ -795,8 +799,9 @@ const handleSubmit = async () => {
       font-size: 16px;
       line-height: 1.6;
 
-      &:focus {
-        outline: none;
+      &:focus-visible {
+        outline: 2px solid var(--admin-brand);
+        outline-offset: 4px;
       }
     }
   }
@@ -1071,6 +1076,7 @@ const handleSubmit = async () => {
 @media (max-width: 768px) {
   .moment-editor {
     .toolbar {
+      flex-wrap: wrap;
       gap: 8px;
       padding: 12px 0;
     }
@@ -1084,6 +1090,10 @@ const handleSubmit = async () => {
         margin-left: auto;
       }
     }
+    :deep(.el-button) { min-height: 44px; margin-left: 0; }
+    :deep(.el-button.is-circle) { min-width: 44px; }
+    :deep(.el-radio-button__inner) { min-height: 44px; display: inline-flex; align-items: center; }
+    :deep(.el-textarea__inner) { font-size: 16px; }
   }
 }
 </style>

@@ -66,7 +66,7 @@
 
   <!-- 本站订阅弹窗 -->
   <el-dialog v-model="subscriberDialogVisible" title="本站订阅者" width="700px" destroy-on-close>
-    <el-table :data="subscriberList" v-loading="subscriberLoading" border style="width: 100%">
+    <component :is="isMobile ? MobileDataList : ElTable" :data="subscriberList" v-loading="subscriberLoading" border style="width: 100%">
       <el-table-column label="邮箱地址" min-width="240">
         <template #default="{ row }">
           <div style="display: flex; align-items: center; gap: 8px">
@@ -96,10 +96,10 @@
           </el-button>
         </template>
       </el-table-column>
-    </el-table>
+    </component>
     <div style="margin-top: 16px; display: flex; justify-content: flex-end;">
       <el-pagination v-model:current-page="subscriberQuery.page" v-model:page-size="subscriberQuery.page_size"
-        :total="subscriberTotal" :page-sizes="[10, 20, 50]" layout="total, sizes, prev, pager, next"
+        :total="subscriberTotal" :page-sizes="[10, 20, 50]" :layout="isMobile ? 'prev, pager, next' : 'total, sizes, prev, pager, next'" :pager-count="isMobile ? 5 : 7"
         @current-change="fetchSubscribers" @size-change="fetchSubscribers" />
     </div>
   </el-dialog>
@@ -107,7 +107,9 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed, reactive } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage, ElMessageBox, ElTable } from 'element-plus'
+import { useMediaQuery } from '@vueuse/core'
+import MobileDataList from '@/components/common/MobileDataList.vue'
 import { Message } from '@element-plus/icons-vue'
 import CommonList from '@/components/common/CommonList.vue'
 import type { RssArticle, RssArticleQuery } from '@/types/rssfeed'
@@ -119,6 +121,7 @@ import { formatDateTime } from '@/utils/date'
 import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
+const isMobile = useMediaQuery('(max-width: 768px)')
  
 
 const loading = ref(false)

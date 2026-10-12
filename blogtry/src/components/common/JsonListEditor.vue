@@ -7,6 +7,7 @@
           :icon="ArrowUp" 
           circle 
           size="small" 
+          aria-label="上移配置项"
           @click="moveUp(index)"
           :disabled="disabled || index === 0" 
         />
@@ -14,6 +15,7 @@
           :icon="ArrowDown" 
           circle 
           size="small" 
+          aria-label="下移配置项"
           @click="moveDown(index)"
           :disabled="disabled || index === internalValue.length - 1" 
           style="margin-left: 0;"
@@ -73,6 +75,7 @@
         :icon="Delete" 
         circle 
         size="small" 
+        aria-label="删除配置项"
         @click="removeItem(index)"
         :disabled="disabled" 
       />
@@ -85,6 +88,7 @@
         :icon="Plus" 
         circle 
         size="small" 
+        aria-label="添加配置项"
         @click="addItem"
         :disabled="disabled" 
       />
@@ -185,6 +189,17 @@ const addItem = () => {
     &.add-row {
       justify-content: flex-end;
     }
+  }
+}
+
+@media (max-width: 768px) {
+  .json-list-editor .editor-item {
+    flex-wrap: wrap;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--admin-border-soft);
+    :deep(.el-input), :deep(.el-select) { width: 100% !important; margin-right: 0 !important; }
+    :deep(.el-button) { margin: 0; min-width: 44px; min-height: 44px; }
+    &.add-row { border-bottom: 0; }
   }
 }
 </style>

@@ -262,7 +262,7 @@ const preview = async () => {
       margin: 8px 0 0;
     }
 
-    .dialogue-example {
+    .dialogue-example, .preview-box {
       grid-template-columns: 1fr;
     }
   }

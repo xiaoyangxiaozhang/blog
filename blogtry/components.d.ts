@@ -70,6 +70,7 @@ declare module 'vue' {
     Header: typeof import('./src/components/layouts/Header.vue')['default']
     ImageUploader: typeof import('./src/components/common/ImageUploader.vue')['default']
     JsonListEditor: typeof import('./src/components/common/JsonListEditor.vue')['default']
+    MobileDataList: typeof import('./src/components/common/MobileDataList.vue')['default']
     NotificationBell: typeof import('./src/components/common/NotificationBell.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']

@@ -1,6 +1,7 @@
 <template>
   <el-dialog v-model="visible" title="友链类型管理" width="550px" :align-center="true">
-    <el-table :data="list" style="margin: 20px 0" max-height="350">
+    <el-button v-if="isMobile" type="primary" plain @click="openForm()">新增类型</el-button>
+    <component :is="isMobile ? MobileDataList : ElTable" :data="list" style="margin: 20px 0" max-height="350">
       <el-table-column prop="name" label="类型名称" min-width="60" />
       <el-table-column prop="sort" label="排序" width="60" align="center" />
       <el-table-column prop="is_visible" label="展示" width="100" align="center">
@@ -20,7 +21,7 @@
           <el-button type="danger" link @click="remove(row)">删除</el-button>
         </template>
       </el-table-column>
-    </el-table>
+    </component>
 
     <el-dialog v-model="formVisible" :title="current.id ? '编辑类型' : '新增类型'" width="450px" append-to-body>
       <el-form :model="current" label-width="80px">
@@ -50,10 +51,13 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { ElMessage, ElMessageBox, ElLoading } from 'element-plus'
+import { ElMessage, ElMessageBox, ElLoading, ElTable } from 'element-plus'
+import { useMediaQuery } from '@vueuse/core'
+import MobileDataList from '@/components/common/MobileDataList.vue'
 import { getFriendTypes, createFriendType, updateFriendType, deleteFriendType } from '@/api/friend'
 import type { FriendType } from '@/types/friend'
 const props = defineProps<{ modelValue: boolean }>()
+const isMobile = useMediaQuery('(max-width: 768px)')
 const emit = defineEmits(['update:modelValue', 'success'])
 
 // 暴露方法给父组件调用

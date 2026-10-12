@@ -25,6 +25,9 @@
                     <el-skeleton :rows="5" animated />
                 </div>
                 <slot v-else-if="$slots.content" name="content" />
+                <mobile-data-list v-else-if="isMobile && !virtual" :data="data" :children-key="mobileChildrenKey">
+                    <slot />
+                </mobile-data-list>
                 <!-- 表格 - 完全由外部控制 -->
                 <el-table v-else-if="!virtual" :data="data" border style="width: 100%; height: 100%" v-bind="$attrs">
                     <slot />
@@ -59,11 +62,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, watch, computed } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch, computed, useAttrs } from 'vue'
+import MobileDataList from './MobileDataList.vue'
 import { Refresh } from '@element-plus/icons-vue'
 import type { Column } from 'element-plus'
 import { useMediaQuery } from '@vueuse/core'
 const isMobile = useMediaQuery('(max-width: 768px)')
+const attrs = useAttrs()
+const mobileChildrenKey = computed(() => (attrs['tree-props'] as { children?: string } | undefined)?.children || '')
 const props=withDefaults(defineProps<{
     title: string
     data: any[]

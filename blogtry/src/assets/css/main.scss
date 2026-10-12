@@ -113,6 +113,41 @@ button:focus-visible, [role='button']:focus-visible {
   .el-dialog input, .el-dialog textarea { font-size: 16px; }
   .el-dropdown-menu__item { min-height: 44px; }
   .el-dialog__footer .el-button, .el-message-box__btns .el-button { min-height: 44px; }
+
+  .admin-main-shell .el-form, .el-dialog .el-form {
+    .el-form-item { flex-direction: column; align-items: stretch; }
+    .el-form-item .el-form-item__label {
+      width: auto !important;
+      height: auto;
+      justify-content: flex-start;
+      padding: 0 0 6px;
+      line-height: 1.6;
+      white-space: normal;
+    }
+    .el-form-item__content { margin-left: 0 !important; min-width: 0; gap: 8px; overflow-wrap: anywhere; }
+    .el-col { flex: 0 0 100%; max-width: 100%; }
+    .el-input, .el-select, .el-input-number, .el-date-editor { max-width: 100%; }
+    .el-input__wrapper, .el-select__wrapper { min-height: 44px; }
+    input, textarea { font-size: 16px; }
+    .el-button { min-height: 44px; }
+    .el-button.is-circle { min-width: 44px; }
+    .el-radio, .el-checkbox, .el-switch { min-height: 44px; height: auto; }
+    .el-radio-group, .el-checkbox-group { display: flex; flex-wrap: wrap; }
+    .el-radio-button__inner { min-height: 44px; display: inline-flex; align-items: center; }
+    .image-uploader, .image-uploader .uploader-container { max-width: 100%; }
+    .image-uploader .delete-btn { width: 44px; height: 44px; border: 0; }
+    .el-upload, .el-upload-dragger { max-width: 100%; }
+  }
+  .admin-main-shell .el-tabs__item { min-height: 44px; }
+  .admin-main-shell .el-card { --el-card-padding: 16px; }
+  .el-dialog__footer { padding-bottom: max(8px, env(safe-area-inset-bottom)); }
+  .el-dialog .el-button.is-circle { min-width: 44px; }
+  .el-dialog .el-upload, .el-dialog .el-upload-dragger { max-width: 100%; }
+  .el-dialog .el-pagination { --el-pagination-button-height: 44px; }
+  .el-dialog .el-pager li { min-width: 44px; }
+  .admin-main-shell .el-segmented { max-width: 100%; --el-segmented-item-min-height: 44px; }
+  .el-popper { max-width: calc(100vw - 24px); }
+  .el-select-dropdown__item { min-height: 44px; display: flex; align-items: center; }
 }
 
 @media (prefers-reduced-motion: reduce) {
