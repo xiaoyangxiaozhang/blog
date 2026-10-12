@@ -1,5 +1,9 @@
 <template>
   <div class="codemirror-editor-wrapper" :class="{ 'is-fullscreen': isBrowserFullscreen || isPageFullscreen }">
+    <div class="mobile-editor-modes" aria-label="文章编辑视图">
+      <button type="button" :aria-pressed="viewMode === 'editor'" @click="viewMode = 'editor'">编辑正文</button>
+      <button type="button" :aria-pressed="viewMode === 'preview'" @click="viewMode = 'preview'">预览正文</button>
+    </div>
     <!-- 工具栏 -->
     <div class="editor-toolbar">
       <template v-for="(item, index) in toolbarItems" :key="index">
@@ -10,9 +14,9 @@
 
         <!-- 下载在线图片按钮 -->
         <template v-else-if="item.title === '下载在线图片'">
-          <el-popover :width="350" trigger="click" placement="bottom">
+          <el-popover width="min(350px, calc(100vw - 24px))" trigger="click" placement="bottom">
             <template #reference>
-              <button :title="item.title" class="toolbar-btn">
+              <button type="button" :title="item.title" :aria-label="item.title" class="toolbar-btn">
                 <i :class="item.icon"></i>
               </button>
             </template>
@@ -31,10 +35,10 @@
         </template>
         <!-- 表情选择器按钮 -->
         <template v-else-if="item.title === '表情'">
-          <el-popover :width="320" trigger="click" placement="bottom" v-model:visible="emojiState.visible"
+          <el-popover width="min(320px, calc(100vw - 24px))" trigger="click" placement="bottom" v-model:visible="emojiState.visible"
             @show="handleEmojiPickerShow">
             <template #reference>
-              <button :title="item.title" class="toolbar-btn" :class="{ active: emojiState.visible }">
+              <button type="button" :title="item.title" :aria-label="item.title" class="toolbar-btn" :class="{ active: emojiState.visible }">
                 <i :class="item.icon"></i>
               </button>
             </template>
@@ -60,7 +64,7 @@
           </el-popover>
         </template>
         <!-- 普通按钮 -->
-        <button v-else @click="item.action" :title="item.title" :class="{
+        <button v-else type="button" @click="item.action" :title="item.title" :aria-label="item.title" :class="{
           active: item.isActive?.(),
           'mobile-only': item.mobileOnly
         }" class="toolbar-btn">
@@ -127,6 +131,7 @@
 <script setup lang="ts">
 import { ref, shallowRef, reactive, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
+import { useMediaQuery } from '@vueuse/core'
 import { uploadFile } from '@/api/file'
 import { getSettingGroup } from '@/api/sysconfig'
 
@@ -271,7 +276,9 @@ const emit = defineEmits<{ 'update:modelValue': [value: string], 'save': [conten
 const editorRef = ref<HTMLElement>()
 const previewPaneRef = ref<HTMLElement>()
 const imageInputRef = ref<HTMLInputElement>()
-const viewMode = ref<ViewMode>('split')
+const isMobile = useMediaQuery('(max-width: 768px)')
+const viewMode = ref<ViewMode>(isMobile.value ? 'editor' : 'split')
+watch(isMobile, mobile => { viewMode.value = mobile ? 'editor' : 'split' })
 const isBrowserFullscreen = ref(false)
 const isPageFullscreen = ref(false)
 const showToc = ref(false)
@@ -1137,10 +1144,6 @@ onMounted(() => {
   document.addEventListener('fullscreenchange', handleFullscreenChange)
   window.addEventListener('resize', handleWindowResize)
 
-  // 移动端默认为纯编辑模式
-  if (window.innerWidth <= 768) {
-    viewMode.value = 'editor'
-  }
 })
 
 onBeforeUnmount(() => {
@@ -1186,8 +1189,8 @@ onBeforeUnmount(() => {
     position: fixed;
     inset: 0;
     width: 100vw !important;
-    height: 100vh !important;
-    z-index: 9999;
+    height: 100dvh !important;
+    z-index: calc(var(--el-index-popper, 2000) + 1);
     border-radius: 0;
   }
 
@@ -1214,7 +1217,7 @@ onBeforeUnmount(() => {
       cursor: pointer;
       font-size: 13px;
       font-weight: 600;
-      transition: all 0.2s;
+      transition: background-color 0.2s, color 0.2s;
 
       i {
         font-size: 15px;
@@ -1233,9 +1236,6 @@ onBeforeUnmount(() => {
       &.mobile-only {
         display: none;
 
-        @media (max-width: 768px) {
-          display: flex;
-        }
       }
     }
 
@@ -1260,6 +1260,7 @@ onBeforeUnmount(() => {
 
     .editor-pane {
       flex: 1;
+      min-width: 0;
       overflow: auto;
       border-right: 1px solid var(--admin-border);
       cursor: text;
@@ -1296,7 +1297,7 @@ onBeforeUnmount(() => {
 
         .cm-content {
           padding: 16px;
-          padding-bottom: max(16px, calc(100vh - 150px));
+          padding-bottom: max(16px, calc(100dvh - 150px));
           min-height: 100%;
           box-sizing: border-box;
         }
@@ -1326,9 +1327,10 @@ onBeforeUnmount(() => {
 
     .preview-pane {
       flex: 1;
+      min-width: 0;
       overflow: auto;
       padding: 20px;
-      padding-bottom: max(20px, calc(100vh - 150px));
+      padding-bottom: max(20px, calc(100dvh - 150px));
 
       &.html-mode {
         padding: 0;
@@ -1447,7 +1449,7 @@ onBeforeUnmount(() => {
           background: transparent;
           color: var(--admin-text-muted);
           cursor: pointer;
-          transition: all 0.2s;
+          transition: background-color 0.2s, color 0.2s;
 
           &:hover {
             background: var(--admin-brand-soft);
@@ -1472,7 +1474,7 @@ onBeforeUnmount(() => {
           line-height: 1.5;
           color: var(--admin-text-secondary);
           border-left: 3px solid transparent;
-          transition: all 0.2s;
+          transition: background-color 0.2s, color 0.2s, border-color 0.2s;
 
           &:hover {
             background: var(--admin-brand-soft);
@@ -1524,7 +1526,7 @@ onBeforeUnmount(() => {
   }
 
   // 移动端适配
-  @media (max-width: 767px) {
+  @media (max-width: 768px) {
     .editor-toolbar {
       padding: 4px 8px;
       gap: 2px;
@@ -1537,8 +1539,8 @@ onBeforeUnmount(() => {
       }
 
       .toolbar-btn {
-        min-width: 32px;
-        height: 32px;
+        min-width: 44px;
+        height: 44px;
         flex-shrink: 0;
       }
 
@@ -1550,16 +1552,17 @@ onBeforeUnmount(() => {
     .editor-container {
       .editor-pane {
         :deep(.cm-editor) {
+          font-size: 16px;
           .cm-content {
             padding: 12px;
-            padding-bottom: max(12px, calc(100vh - 200px));
+            padding-bottom: max(12px, calc(100dvh - 200px));
           }
         }
       }
 
       .preview-pane {
         padding: 12px;
-        padding-bottom: max(12px, calc(100vh - 200px));
+        padding-bottom: max(12px, calc(100dvh - 200px));
       }
 
       .toc-pane {
@@ -1591,6 +1594,33 @@ onBeforeUnmount(() => {
       }
     }
   }
+}
+
+.mobile-editor-modes {
+  display: none;
+  @media (max-width: 768px) {
+    display: flex;
+    flex-shrink: 0;
+    padding: 0 12px;
+    gap: 20px;
+    border-bottom: 1px solid var(--admin-border);
+    button {
+      min-height: 44px;
+      padding: 0 6px;
+      border: 0;
+      border-bottom: 2px solid transparent;
+      background: transparent;
+      color: var(--admin-text-secondary);
+      font: inherit;
+      font-size: 14px;
+      cursor: pointer;
+      &[aria-pressed='true'] { color: var(--admin-brand); border-bottom-color: var(--admin-brand); }
+    }
+  }
+}
+button:focus-visible, :deep(.cm-content:focus-visible), :deep(.cm-search input:focus-visible) {
+  outline: 2px solid var(--admin-brand);
+  outline-offset: -2px;
 }
 
 // 表情选择器样式

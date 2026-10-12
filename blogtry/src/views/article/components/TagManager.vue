@@ -1,10 +1,10 @@
 <template>
   <el-dialog v-model="visible" title="标签管理" width="800px" :align-center="true">
     <el-table :data="list" style="margin: 20px 0" max-height="350">
-      <el-table-column prop="name" label="标签名称" />
-      <el-table-column prop="description" label="描述" show-overflow-tooltip />
-      <el-table-column prop="count" label="文章数" width="100" align="center" />
-      <el-table-column label="操作" width="120" align="center">
+      <el-table-column prop="name" label="标签名称" min-width="100" />
+      <el-table-column v-if="!isMobile" prop="description" label="描述" show-overflow-tooltip />
+      <el-table-column prop="count" :label="isMobile ? '文章' : '文章数'" :width="isMobile ? 52 : 100" align="center" />
+      <el-table-column label="操作" :width="isMobile ? 112 : 120" align="center">
         <template #header>
           <el-button type="primary" plain size="small" @click="openForm()">新增</el-button>
         </template>
@@ -34,6 +34,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useMediaQuery } from '@vueuse/core'
+const isMobile = useMediaQuery('(max-width: 768px)')
 import { ElMessage, ElMessageBox, ElLoading } from 'element-plus'
 import { useArticleStore } from '@/stores/article'
 import type { Tag } from '@/types/tag'

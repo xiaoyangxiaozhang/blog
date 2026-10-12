@@ -98,6 +98,27 @@ body {
   transition: background-color 250ms ease, color 250ms ease;
 }
 
+button:focus-visible, [role='button']:focus-visible {
+  outline: 2px solid var(--admin-brand);
+  outline-offset: 2px;
+}
+
+@media (max-width: 768px) {
+  .el-dialog { max-width: calc(100vw - 24px); }
+  .el-dialog__body { max-height: 70dvh; overflow: auto; }
+  .el-message-box { max-width: calc(100vw - 24px); }
+  .el-dialog__headerbtn { width: 44px; height: 44px; }
+  .el-dialog .el-button { min-height: 44px; }
+  .el-dialog .el-input__wrapper, .el-dialog .el-select__wrapper { min-height: 44px; }
+  .el-dialog input, .el-dialog textarea { font-size: 16px; }
+  .el-dropdown-menu__item { min-height: 44px; }
+  .el-dialog__footer .el-button, .el-message-box__btns .el-button { min-height: 44px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
 /* 自定义滚动条样式 */
 ::-webkit-scrollbar {
   width: 6px;

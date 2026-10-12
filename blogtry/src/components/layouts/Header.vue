@@ -2,7 +2,7 @@
   <div class="header">
     <div class="left">
       <!-- 移动端：点击触发抽屉 -->
-      <button type="button" class="toggle-sidebar mobile-only" aria-label="打开导航" @click="handleMobileToggle">
+      <button type="button" class="toggle-sidebar mobile-only" aria-label="打开导航" :aria-expanded="mobileMenuOpen" @click="handleMobileToggle">
         <i class="ri-menu-line ri-lg"></i>
       </button>
       <!-- 桌面端：折叠按钮 -->
@@ -27,7 +27,7 @@
       </button>
       <NotificationBell />
       <el-dropdown trigger="click">
-        <span class="user-info">
+        <span class="user-info" aria-label="账号菜单">
           <el-avatar :src="userAvatar" @error="handleAvatarError" />
           <span class="nickname hide-on-mobile">{{ nickname }}</span>
           <el-icon class="arrow-icon"><ArrowDown /></el-icon>
@@ -147,23 +147,20 @@ onMounted(() => {
 interface Props {
   layoutMode: 'drawer' | 'fixed'
   sidebarCollapsed: boolean
+  mobileMenuOpen?: boolean
 }
 
 defineProps<Props>()
 
 // 定义事件
-const emit = defineEmits(['toggle-sidebar'])
+const emit = defineEmits(['toggle-sidebar', 'toggle-mobile-menu'])
 
 const handleToggleSidebar = () => {
   emit('toggle-sidebar')
 }
 
 const handleMobileToggle = () => {
-  // 找到移动端的 sidebar-toggle checkbox 并切换状态
-  const checkbox = document.getElementById('sidebar-toggle') as HTMLInputElement
-  if (checkbox) {
-    checkbox.checked = !checkbox.checked
-  }
+  emit('toggle-mobile-menu')
 }
 
 const handleAvatarError = () => {
@@ -200,8 +197,8 @@ const handleLogout = async () => {
   padding: 0 24px;
 
   // 移动端减小内边距
-  @media (max-width: 767px) {
-    padding: 0 12px;
+  @media (max-width: 768px) {
+    padding: 0 8px;
   }
 
   .left {
@@ -226,9 +223,10 @@ const handleLogout = async () => {
       }
 
       // 移动端增大触摸区域
-      @media (max-width: 767px) {
-        margin-right: 8px;
-        padding: 10px;
+      @media (max-width: 768px) {
+        margin-right: 4px;
+        width: 44px;
+        height: 44px;
       }
     }
 
@@ -276,8 +274,8 @@ const handleLogout = async () => {
     align-items: center;
 
     .theme-toggle {
-      width: 34px;
-      height: 34px;
+      width: 44px;
+      height: 44px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -306,14 +304,14 @@ const handleLogout = async () => {
       padding: 5px 8px;
       border-radius: var(--admin-radius-pill);
       transition: background-color 180ms ease;
-      outline: none;
 
       &:hover {
         background-color: var(--admin-brand-soft);
       }
 
-      &:focus {
-        outline: none;
+      &:focus-visible {
+        outline: 2px solid var(--admin-brand);
+        outline-offset: 2px;
       }
 
       .nickname {
@@ -329,6 +327,8 @@ const handleLogout = async () => {
     }
   }
 }
+
+button:focus-visible { outline: 2px solid var(--admin-brand); outline-offset: 2px; }
 
 .hide-on-mobile {
   @media (max-width: 768px) {

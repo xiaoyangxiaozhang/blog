@@ -10,19 +10,21 @@
             <el-button type="primary" v-if="showCreate"  @click="$emit('create')">{{ createText }}</el-button>
             <!-- 后工具栏自定义 -->
             <slot name="toolbar-after"></slot>
-            <el-button class="refresh-btn"  @click="$emit('refresh')"><el-icon>
+            <el-button class="refresh-btn" aria-label="刷新列表" :disabled="loading" @click="$emit('refresh')"><el-icon>
                 <Refresh />
             </el-icon>
         </el-button>
         </div>
        </div>
        <slot name="extra"></slot>
+       <slot name="filters"></slot>
        <!-- 表格容器 -->
        <div class="table-wrapper">
                 <!-- 加载状态 -->
                 <div v-if="loading" class="common-list-loading">
                     <el-skeleton :rows="5" animated />
                 </div>
+                <slot v-else-if="$slots.content" name="content" />
                 <!-- 表格 - 完全由外部控制 -->
                 <el-table v-else-if="!virtual" :data="data" border style="width: 100%; height: 100%" v-bind="$attrs">
                     <slot />
@@ -44,7 +46,8 @@
                 :current-page="page"
                 :page-sizes="[10, 20, 30, 40]"
                 :page-size="pageSize"
-                layout="total, sizes, prev, pager, next, jumper"
+                :layout="isMobile ? 'prev, pager, next' : 'total, sizes, prev, pager, next, jumper'"
+                :pager-count="isMobile ? 5 : 7"
                 :total="total"
                 @current-change="$emit('update:page', $event)"
                 @size-change="$emit('update:pageSize', $event)"
@@ -59,6 +62,8 @@
 import { ref, onMounted, onBeforeUnmount, watch, computed } from 'vue'
 import { Refresh } from '@element-plus/icons-vue'
 import type { Column } from 'element-plus'
+import { useMediaQuery } from '@vueuse/core'
+const isMobile = useMediaQuery('(max-width: 768px)')
 const props=withDefaults(defineProps<{
     title: string
     data: any[]
@@ -156,6 +161,7 @@ watch(
 <style scoped lang="scss">
 .common-list {
     height: 100%;
+    min-width: 0;
 
     :deep(.el-card) {
         height: 100%;
@@ -194,7 +200,7 @@ watch(
             }
         }
 
-        @media (max-width: 767px) {
+        @media (max-width: 768px) {
             flex-direction: column;
             align-items: flex-start;
             gap: 12px;
@@ -207,15 +213,15 @@ watch(
                 width: 100%;
                 flex-wrap: wrap;
 
-                .refresh-btn {
-                    display: none;
-                }
+                :deep(.el-button) { min-height: 44px; }
             }
         }
     }
 
     .table-wrapper {
         flex: 1;
+        min-width: 0;
+        flex-shrink: 0;
         overflow: auto;
         position: relative;
     min-height: 200px; // 保证虚拟表格有最小高度
@@ -230,9 +236,21 @@ watch(
         justify-content: flex-end;
         padding-top: 12px;
 
-        @media (max-width: 767px) {
+        @media (max-width: 768px) {
             justify-content: center;
+            :deep(.el-pagination) { --el-pagination-button-height: 44px; }
+            :deep(.el-pager li) { min-width: 44px; }
         }
+    }
+
+    @media (max-width: 768px) {
+        height: auto;
+        :deep(.el-card) {
+            height: auto;
+            --el-card-padding: 16px;
+            &:hover { box-shadow: none; }
+        }
+        .table-wrapper { overflow-x: auto; }
     }
 }
 </style>

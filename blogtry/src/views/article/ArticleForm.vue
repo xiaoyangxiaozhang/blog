@@ -3,15 +3,16 @@
     <!-- 固定顶部导航栏 -->
     <header class="editor-header">
       <div class="header-left">
-        <el-button :icon="ArrowLeft" circle @click="handleCancel" title="返回" />
+        <el-button :icon="ArrowLeft" circle @click="handleCancel" title="返回" aria-label="返回文章列表" />
         <span class="page-label">{{ isEdit ? '编辑文章' : '新增文章' }}</span>
       </div>
 
       <div class="header-center">
         <div class="title-container">
-          <input v-model="formData.title" placeholder="请输入文章标题..." maxlength="200" class="simple-title-input" />
-          <i v-if="!generatingTitle" class="ri-quill-pen-ai-line ai-generate-icon" @click="handleGenerateTitle"></i>
-          <i v-else class="ri-loader-line ai-generate-icon is-loading"></i>
+          <input v-model="formData.title" placeholder="请输入文章标题..." aria-label="文章标题" maxlength="200" class="simple-title-input" />
+          <button type="button" class="ai-title-button" aria-label="AI 生成文章标题" :disabled="generatingTitle" @click="handleGenerateTitle">
+            <i :class="generatingTitle ? 'ri-loader-line is-loading' : 'ri-quill-pen-ai-line'"></i>
+          </button>
         </div>
       </div>
 
@@ -27,11 +28,11 @@
 
     <!-- 主编辑区域 -->
     <main class="editor-main" v-loading="loading">
-      <CodeMirrorEditor v-model="formData.content" />
+      <CodeMirrorEditor v-model="formData.content" @save="handleSave(false)" />
     </main>
 
     <!-- 侧边抽屉 - 文章设置 -->
-    <el-drawer v-model="drawerVisible" title="文章设置" :size="drawerSize" direction="rtl">
+    <el-drawer v-model="drawerVisible" title="文章设置" :size="drawerSize" direction="rtl" class="article-settings-drawer">
       <el-form ref="formRef" 
       :model="formData" 
       label-width="100px"
@@ -87,7 +88,7 @@
           <div class="cover-upload-container">
             <!-- 左侧：上传器/预览 -->
             <div class="cover-left">
-              <ImageUploader ref="coverUploaderRef" v-model="formData.cover" upload-type="文章封面" width="285px"
+              <ImageUploader ref="coverUploaderRef" v-model="formData.cover" upload-type="文章封面" :width="isMobile ? 'min(285px, 100%)' : '285px'"
                 height="160px" crop />
             </div>
 
@@ -149,13 +150,14 @@
           </div>
         </div>
 
-        <!-- 保存按钮 -->
+      </el-form>
+      <template #footer>
         <div class="drawer-footer">
           <el-button type="primary" @click="() => handleSave()" :loading="loading" size="large" style="width: 100%">
             {{ loading ? '保存中...' : '保存' }}
           </el-button>
         </div>
-      </el-form>
+      </template>
     </el-drawer>
 
     <!-- 封面制作对话框 -->
@@ -178,15 +180,14 @@ import { downloadImage } from '@/api/tools'
 import { uploadFile } from '@/api/file'
 import { generateAISummary, generateSummary, generateTitle } from '@/api/ai'
 import { parseBackendDate, formatForBackend } from '@/utils/date'
-import { useDebounceFn } from '@vueuse/core'
+import { useDebounceFn, useMediaQuery } from '@vueuse/core'
 import { useAutoLocation } from '@/composables/useAutoLocation'
 import ImageUploader from '@/components/common/ImageUploader.vue'
 import CodeMirrorEditor from './components/CodeMirrorEditor.vue'
 import CoverMakerDialog from './components/CoverMakerDialog.vue'
 
-const drawerSize = computed(() => {
-  return window.innerWidth <= 768 ? '100%' : 800
-})
+const isMobile = useMediaQuery('(max-width: 768px)')
+const drawerSize = computed(() => isMobile.value ? '100%' : 'min(800px, 100%)')
 
 const route = useRoute()
 const router = useRouter()
@@ -912,7 +913,7 @@ onBeforeRouteLeave(async (_, __, next) => {
 
 <style scoped lang="scss">
 .article-editor-page {
-  height: 100vh; // 固定视窗高度，让编辑器 footer 固定在底部
+  height: 100dvh;
   background: var(--admin-bg);
   display: flex;
   flex-direction: column;
@@ -969,6 +970,8 @@ onBeforeRouteLeave(async (_, __, next) => {
         padding: 8px 36px 8px 12px;
         border-radius: 4px;
         transition: background-color 0.2s;
+        min-height: 44px;
+        &:focus-visible { outline: 2px solid var(--admin-brand); outline-offset: -2px; }
 
         &::placeholder {
           color: var(--admin-text-muted);
@@ -976,17 +979,23 @@ onBeforeRouteLeave(async (_, __, next) => {
         }
       }
 
-      .ai-generate-icon {
+      .ai-title-button {
         position: absolute;
-        right: 8px;
+        right: 0;
         top: 50%;
         transform: translateY(-50%);
         font-size: 18px;
+        width: 44px;
+        height: 44px;
+        border: 0;
+        border-radius: 8px;
+        color: var(--admin-brand);
+        background: transparent;
         cursor: pointer;
         opacity: 0.8;
         line-height: 0;
 
-        &.is-loading {
+        .is-loading {
           animation: spin 1s linear infinite;
         }
       }
@@ -1000,11 +1009,20 @@ onBeforeRouteLeave(async (_, __, next) => {
     }
 
     @media (max-width: 768px) {
-      flex-wrap: wrap;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      padding: 8px 12px;
+      gap: 8px;
+      box-shadow: none;
+      .header-left { gap: 6px; }
+      .page-label { font-size: 12px; }
+      .header-right { gap: 4px; }
+      :deep(.el-button) { min-height: 44px; margin-left: 0; padding: 0 12px; }
+      :deep(.el-button.is-circle) { width: 44px; padding: 0; }
 
       .header-center {
-        order: 3;
-        flex-basis: 100%;
+        grid-column: 1 / -1;
+        grid-row: 2;
       }
     }
   }
@@ -1048,7 +1066,7 @@ onBeforeRouteLeave(async (_, __, next) => {
       .ai-generate-icon {
         font-size: 14px;
         cursor: pointer;
-        transition: all 0.2s;
+        transition: color 0.2s, opacity 0.2s;
         opacity: 0.8;
 
         &.is-loading {
@@ -1095,9 +1113,7 @@ onBeforeRouteLeave(async (_, __, next) => {
 
   // 抽屉底部保存按钮
   .drawer-footer {
-    margin-top: 16px;
-    padding-top: 24px;
-    border-top: 1px solid var(--admin-border);
+    padding-bottom: env(safe-area-inset-bottom);
   }
 
   // 加载状态优化
@@ -1154,6 +1170,16 @@ onBeforeRouteLeave(async (_, __, next) => {
       }
     }
   }
+}
+
+.ai-title-button:focus-visible { outline: 2px solid var(--admin-brand); outline-offset: 2px; }
+:global(.article-settings-drawer .el-drawer__footer) { border-top: 1px solid var(--admin-border); }
+@media (max-width: 768px) {
+  :global(.article-settings-drawer .el-drawer__body) { padding: 16px; }
+  :global(.article-settings-drawer .el-drawer__close-btn) { width: 44px; height: 44px; }
+  :global(.article-settings-drawer .el-input__wrapper), :global(.article-settings-drawer .el-select__wrapper) { min-height: 44px; }
+  :global(.article-settings-drawer input), :global(.article-settings-drawer textarea) { font-size: 16px; }
+  .cover-left { max-width: 100%; }
 }
 
 // 旋转动画

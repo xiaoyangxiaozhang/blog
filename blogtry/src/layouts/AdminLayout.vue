@@ -1,20 +1,15 @@
 <template>
   <div class="admin-layout">
-    <!-- 移动端：checkbox 控制抽屉 -->
-    <input type="checkbox" id="sidebar-toggle" class="sidebar-toggle">
-
     <el-container class="layout-container">
       <!-- 固定侧边栏 -->
-      <el-aside :width="sidebarWidth" class="sidebar">
+      <el-aside v-if="!isMobile" :width="sidebarWidth" class="sidebar">
         <Sidebar :is-collapse="sidebarCollapsed" @menu-click="handleMenuClick" />
       </el-aside>
 
-      <!-- 移动端遮罩层 -->
-      <label for="sidebar-toggle" class="sidebar-overlay"></label>
-
       <el-container>
         <el-header>
-          <Header :layout-mode="layoutMode" :sidebar-collapsed="sidebarCollapsed" @toggle-sidebar="toggleSidebar" />
+          <Header :layout-mode="layoutMode" :sidebar-collapsed="sidebarCollapsed" :mobile-menu-open="mobileMenuOpen"
+            @toggle-sidebar="toggleSidebar" @toggle-mobile-menu="mobileMenuOpen = !mobileMenuOpen" />
         </el-header>
         <el-main>
           <div class="admin-main-shell">
@@ -23,15 +18,23 @@
         </el-main>
       </el-container>
     </el-container>
+    <el-drawer v-if="isMobile" v-model="mobileMenuOpen" title="导航" direction="ltr"
+      size="min(280px, calc(100vw - 44px))" class="mobile-navigation">
+      <Sidebar :is-collapse="false" @menu-click="handleMenuClick" />
+    </el-drawer>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { useMediaQuery } from '@vueuse/core'
 import Header from '@/components/layouts/Header.vue'
 import Sidebar from '@/components/layouts/Sidebar.vue'
 
 const sidebarCollapsed = ref(false)
+const isMobile = useMediaQuery('(max-width: 768px)')
+const mobileMenuOpen = ref(false)
+watch(isMobile, () => { mobileMenuOpen.value = false })
 
 const sidebarWidth = computed(() => {
   return sidebarCollapsed.value ? '64px' : '200px'
@@ -44,25 +47,16 @@ const toggleSidebar = () => {
 const layoutMode = 'fixed'
 
 const handleMenuClick = () => {
-  // 移动端点击菜单后关闭抽屉
-  const checkbox = document.getElementById('sidebar-toggle') as HTMLInputElement
-  if (checkbox) {
-    checkbox.checked = false
-  }
+  mobileMenuOpen.value = false
 }
 </script>
 
 <style scoped lang="scss">
 .admin-layout {
-  height: 100vh;
+  height: 100dvh;
   position: relative;
   background: var(--admin-bg);
   color: var(--admin-text);
-}
-
-// 隐藏 checkbox
-.sidebar-toggle {
-  display: none;
 }
 
 .layout-container {
@@ -75,50 +69,6 @@ const handleMenuClick = () => {
   transition: width 0.25s ease;
   overflow: hidden;
 
-  // 移动端抽屉效果
-  @media (max-width: 768px) {
-    position: fixed;
-    left: -200px;
-    top: 0;
-    bottom: 0;
-    width: 200px !important;
-    z-index: 2000;
-    transition: left 0.25s ease;
-  }
-}
-
-// 移动端遮罩层
-.sidebar-overlay {
-  display: none;
-
-  @media (max-width: 768px) {
-    display: block;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.68);
-    z-index: 1999;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s;
-  }
-}
-
-// checkbox 选中时显示侧边栏
-.sidebar-toggle:checked {
-  @media (max-width: 768px) {
-    ~.layout-container .sidebar {
-      left: 0;
-    }
-
-    ~.layout-container .sidebar-overlay {
-      opacity: 1;
-      pointer-events: auto;
-      cursor: pointer;
-    }
-  }
 }
 
 .el-header {
@@ -133,12 +83,14 @@ const handleMenuClick = () => {
 
 .el-container {
   height: 100%;
+  min-width: 0;
 }
 
 .el-main {
   background: var(--home-surface);
   padding: 38px 40px 56px;
   overflow: auto;
+  min-width: 0;
 
   .admin-main-shell {
     width: min(1120px, 100%);
@@ -146,7 +98,11 @@ const handleMenuClick = () => {
   }
 
   @media (max-width: 768px) {
-    padding: 28px 16px 40px;
+    padding: 16px 12px max(24px, env(safe-area-inset-bottom));
   }
 }
+
+:global(.mobile-navigation .el-drawer__body) { padding: 0; }
+:global(.mobile-navigation .el-drawer__header) { margin-bottom: 0; }
+:global(.mobile-navigation .el-drawer__close-btn) { width: 44px; height: 44px; }
 </style>

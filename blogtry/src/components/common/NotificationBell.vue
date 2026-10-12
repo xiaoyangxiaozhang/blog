@@ -1,10 +1,10 @@
 <template>
   <div class="notification-bell">
-    <el-popover placement="bottom" :width="450" trigger="click" v-model:visible="visible">
+    <el-popover placement="bottom" width="min(450px, calc(100vw - 24px))" trigger="click" v-model:visible="visible">
       <!-- 小铃铛 -->
       <template #reference>
         <el-badge :value="unreadCount" :hidden="unreadCount === 0" class="bell-badge">
-          <el-button :icon="Bell" circle @click="handleBellClick" />
+          <el-button :icon="Bell" circle aria-label="查看通知" @click="handleBellClick" />
         </el-badge>
       </template>
 
@@ -254,6 +254,10 @@ onUnmounted(() => timer && clearInterval(timer))
 <style scoped lang="scss">
 .notification-bell {
   margin-right: 14px;
+  @media (max-width: 768px) {
+    margin-right: 4px;
+    :deep(.el-button) { width: 44px; height: 44px; }
+  }
 }
 
 .notification-popover {
