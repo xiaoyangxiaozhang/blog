@@ -9,11 +9,11 @@
         <div class="login-form">
           <div class="form-item">
             <i class="ri-user-line"></i>
-            <input type="text" v-model="formState.email" placeholder="请输入邮箱" @keyup.enter="handleLogin" />
+            <input type="email" inputmode="email" autocomplete="username" aria-label="邮箱" v-model="formState.email" placeholder="请输入邮箱" @keyup.enter="handleLogin" />
           </div>
           <div class="form-item">
             <i class="ri-lock-line"></i>
-            <input type="password" v-model="formState.password" placeholder="请输入密码" @keyup.enter="handleLogin" />
+            <input type="password" autocomplete="current-password" aria-label="密码" v-model="formState.password" placeholder="请输入密码" @keyup.enter="handleLogin" />
           </div>
           <button class="submit-btn" :disabled="loading" @click="handleLogin">
             <span v-if="!loading">登 录</span>
@@ -71,7 +71,7 @@ const handleLogin = async () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100vh;
+  min-height: 100dvh;
   background: #f8fafc;
   position: relative;
   overflow: hidden;
@@ -158,7 +158,7 @@ const handleLogin = async () => {
       color: #1e293b;
       font-size: 15px;
       background: #f8fafc;
-      transition: all 0.2s ease;
+      transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 
       &:focus {
         border-color: #1e293b;
@@ -182,7 +182,7 @@ const handleLogin = async () => {
     font-size: 16px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background-color 0.2s ease, transform 0.2s ease;
     margin-top: 8px;
 
     &:hover:not(:disabled) {
@@ -236,7 +236,7 @@ const handleLogin = async () => {
 
   .login-container {
     max-width: 100%;
-    padding: 16px;
+    padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
   }
 
   .login-card {
@@ -262,7 +262,8 @@ const handleLogin = async () => {
 
       input {
         height: 44px;
-        font-size: 14px;
+        line-height: 44px;
+        font-size: 16px;
       }
     }
 

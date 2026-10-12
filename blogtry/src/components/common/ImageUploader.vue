@@ -639,6 +639,11 @@ onUnmounted(() => {
     margin-top: 16px;
   }
 
+  @media (max-width: 768px) {
+    .uploader-container { max-width: 100%; }
+    .uploader-container .delete-btn { width: 44px; height: 44px; }
+  }
+
   @media (max-width: 560px) {
     .crop-dialog {
       padding: 14px;
