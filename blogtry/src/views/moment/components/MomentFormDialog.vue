@@ -178,6 +178,7 @@
   <!-- 图片Dialog -->
   <el-dialog v-model="imageDialogVisible" title="动态配图" :width="subDialogWidth">
     <div class="image-form">
+      <ImageUploadOptions :disabled="submitLoading" />
       <div style="display: flex; gap: 8px; margin-bottom: 16px;">
         <el-input v-model="imageUrlInput" placeholder="输入图片链接或点击右侧上传" @keyup.enter="addImageUrl" style="flex: 1;" />
         <el-button type="primary" @click="addImageUrl" :disabled="!imageUrlInput.trim()">添加</el-button>
@@ -300,6 +301,7 @@
   </el-dialog>
 </template>
 <script setup lang="ts">
+import ImageUploadOptions from '@/components/common/ImageUploadOptions.vue'
 import { onBeforeUnmount, onMounted, ref, reactive, computed, watch } from 'vue'
 import { useMomentStore } from '@/stores/moment'
 import type { CreateMomentRequest, UpdateMomentRequest } from '@/types/moment'

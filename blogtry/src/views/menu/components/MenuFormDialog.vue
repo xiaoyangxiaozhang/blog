@@ -23,6 +23,7 @@
       </el-form-item>
 
       <el-form-item label="图标" prop="icon">
+        <ImageUploadOptions :disabled="submitLoading" style="width: 100%" />
         <div class="icon-input-wrapper">
           <el-input v-model="formData.icon" placeholder="请输入图标类名(ri-home-line)或上传图片" maxlength="500">
             <template #append>
@@ -77,6 +78,7 @@
 </template>
 
 <script setup lang="ts">
+import ImageUploadOptions from '@/components/common/ImageUploadOptions.vue'
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Upload } from '@element-plus/icons-vue'

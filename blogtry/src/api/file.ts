@@ -1,3 +1,7 @@
+import { compressImage, hasTIFFHeader, type ImageUploadOptions } from '@/utils/imageUpload'
+import { keepOriginalImages } from '@/utils/imageUploadPreference'
+export { compressImage } from '@/utils/imageUpload'
+
 import request from "@/utils/request";
 import type { FileInfo, FileListData, FileListQuery } from "@/types/file";
 
@@ -16,7 +20,7 @@ export interface UploadProgress {
   percentage: number
 }
 
-export interface UploadOptions {
+export interface UploadOptions extends ImageUploadOptions {
   onProgress?: (progress: UploadProgress) => void
   maxRetries?: number
   signal?: AbortSignal
@@ -53,69 +57,13 @@ interface ChunkUploadResponse {
 }
 
 export const CHUNK_UPLOAD_THRESHOLD = 10 * 1024 * 1024
-const IMAGE_COMPRESSION_THRESHOLD = 1024 * 1024
-const IMAGE_MAX_DIMENSION = 1920
-const IMAGE_COMPRESSION_QUALITY = 0.82
-const COMPRESSIBLE_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
 const RAW_IMAGE_PATTERN = /\.(dng|tif|tiff)$/i
 const DEFAULT_MAX_RETRIES = 3
 const CHUNK_UPLOAD_STORAGE_PREFIX = 'blogtry:chunk-upload:'
 
-const getCompressedFileName = (file: File, contentType: string) => {
-  const baseName = file.name.replace(/\.[^/.]+$/, '') || 'image'
-  const extension = contentType === 'image/jpeg' ? 'jpg' : contentType.split('/')[1] || 'bin'
-  return `${baseName}-compressed.${extension}`
-}
-
 export const isRawImageFile = (file: File) => (
   RAW_IMAGE_PATTERN.test(file.name) || ['image/x-adobe-dng', 'image/dng'].includes(file.type)
 )
-
-/**
- * 在浏览器端压缩较大的栅格图片，视频、动图和矢量图保持原文件上传。
- */
-export async function compressImage(file: File): Promise<File> {
-  if (isRawImageFile(file) || file.size <= IMAGE_COMPRESSION_THRESHOLD || !COMPRESSIBLE_IMAGE_TYPES.has(file.type)) {
-    return file
-  }
-
-  const objectUrl = URL.createObjectURL(file)
-  try {
-    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
-      const element = new Image()
-      element.onload = () => resolve(element)
-      element.onerror = () => reject(new Error('无法读取图片'))
-      element.src = objectUrl
-    })
-
-    const scale = Math.min(1, IMAGE_MAX_DIMENSION / image.naturalWidth, IMAGE_MAX_DIMENSION / image.naturalHeight)
-    const width = Math.max(1, Math.round(image.naturalWidth * scale))
-    const height = Math.max(1, Math.round(image.naturalHeight * scale))
-    const canvas = document.createElement('canvas')
-    canvas.width = width
-    canvas.height = height
-
-    const context = canvas.getContext('2d')
-    if (!context) return file
-    context.drawImage(image, 0, 0, width, height)
-
-    const blob = await new Promise<Blob | null>((resolve) => {
-      canvas.toBlob(resolve, file.type, file.type === 'image/png' ? undefined : IMAGE_COMPRESSION_QUALITY)
-    })
-    if (!blob || blob.size >= file.size) return file
-
-    const contentType = blob.type || file.type
-    return new File([blob], getCompressedFileName(file, contentType), {
-      type: contentType,
-      lastModified: file.lastModified
-    })
-  } catch {
-    // 图片解码或 Canvas 受限时回退原文件，不阻断上传。
-    return file
-  } finally {
-    URL.revokeObjectURL(objectUrl)
-  }
-}
 
 const emitProgress = (onProgress: UploadOptions['onProgress'], loaded: number, total: number) => {
   if (!onProgress) return
@@ -280,7 +228,11 @@ const uploadFileInChunks = async (file: File, type: string, options: UploadOptio
  * @returns {Promise<UploadResponse>} 上传结果
  */
 export async function uploadFile(file: File, type = 'image', options: UploadOptions = {}): Promise<UploadResponse> {
-  const uploadTarget = await compressImage(file)
+  const keepOriginal = options.keepOriginal ?? keepOriginalImages.value
+  if (keepOriginal && (isRawImageFile(file) || await hasTIFFHeader(file))) {
+    throw new Error('RAW/TIFF 上传会转换为 JPEG 预览，无法保留原文件。请关闭保留原图，或选择 JPEG、PNG、WebP、GIF。')
+  }
+  const uploadTarget = await compressImage(file, { keepOriginal })
 	const publicUpload = ['avatar', 'cat_moment', 'kimidou_moment', 'kimidou_cover'].includes(type.toLowerCase())
 
   if (uploadTarget.size >= CHUNK_UPLOAD_THRESHOLD) {

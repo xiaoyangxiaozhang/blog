@@ -76,6 +76,7 @@
         <el-input v-model="contentText" type="textarea" :rows="6" maxlength="1000" show-word-limit placeholder="分享你和小猫的日常" />
       </el-form-item>
       <el-form-item label="图片（最多9张）">
+        <ImageUploadOptions :disabled="saving" />
         <input type="file" accept="image/*" multiple @change="handleFileChange" />
         <div class="selected-images">
           <div v-for="(image, index) in previewImages" :key="image" class="selected-image">
@@ -99,6 +100,7 @@
 </template>
 
 <script setup lang="ts">
+import ImageUploadOptions from '@/components/common/ImageUploadOptions.vue'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import CommonList from '@/components/common/CommonList.vue'

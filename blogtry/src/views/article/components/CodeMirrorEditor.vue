@@ -77,6 +77,8 @@
         @change="handleImageSelect" />
     </div>
 
+    <ImageUploadOptions />
+
     <!-- 编辑器主体 -->
     <div class="editor-container">
       <!-- 编辑器面板 -->
@@ -129,6 +131,7 @@
 </template>
 
 <script setup lang="ts">
+import ImageUploadOptions from '@/components/common/ImageUploadOptions.vue'
 import { ref, shallowRef, reactive, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useMediaQuery } from '@vueuse/core'

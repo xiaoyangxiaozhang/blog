@@ -1,10 +1,12 @@
 <template>
   <div class="wangeditor-container">
+    <ImageUploadOptions />
     <div ref="editorRef" style="height: 500px; border: 1px solid var(--admin-border)"></div>
   </div>
 </template>
 
 <script setup lang="ts">
+import ImageUploadOptions from '@/components/common/ImageUploadOptions.vue'
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { createEditor } from '@wangeditor/editor'
 import '@wangeditor/editor/dist/css/style.css'
@@ -35,9 +37,9 @@ const initEditor = () => {
         customUpload: async (file: File, insertFn: Function) => {
           try {
             // 调用上传 API
-            const url = await uploadFile(file)
+            const result = await uploadFile(file, '文章图片')
             // 插入图片
-            insertFn(url)
+            insertFn(result.file_url)
           } catch (error) {
             console.error('上传图片失败:', error)
           }

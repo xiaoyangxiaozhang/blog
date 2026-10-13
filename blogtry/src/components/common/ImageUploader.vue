@@ -27,6 +27,8 @@
       </div>
     </div>
 
+    <ImageUploadOptions compact :disabled="disabled || uploading || cropSaving" />
+
     <div v-if="cropVisible" class="crop-dialog-mask" @click.self="cancelCrop">
       <section class="crop-dialog" role="dialog" aria-modal="true" aria-labelledby="crop-dialog-title">
         <div class="crop-dialog-header">
@@ -50,6 +52,7 @@
 
         <div class="crop-dialog-actions">
           <el-button @click="cancelCrop">取消</el-button>
+          <el-button :disabled="cropSaving" @click="keepOriginalImages = true">保留原图</el-button>
           <el-button type="primary" :loading="cropSaving" @click="confirmCrop">
             应用裁切
           </el-button>
@@ -60,9 +63,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, onUnmounted } from 'vue'
+import { ref, computed, nextTick, onUnmounted, watch } from 'vue'
 import { ElMessage, type UploadRequestOptions } from 'element-plus'
 import { Plus, Delete } from '@element-plus/icons-vue'
+import ImageUploadOptions from './ImageUploadOptions.vue'
+import { keepOriginalImages } from '@/utils/imageUploadPreference'
+import { hasJPEGHeader, hasTIFFHeader } from '@/utils/imageUpload'
 import { isRawImageFile, uploadFile, type UploadProgress } from '@/api/file'
 
 export interface ImageUploaderProps {
@@ -88,6 +94,7 @@ const emit = defineEmits<{
   'update:modelValue': [value: string]
 }>()
 
+const selectedFile = ref<File | null>(null)
 const pendingFile = ref<File | null>(null) // 待上传的文件
 const previewUrl = ref<string>('') // 本地预览 URL
 const uploading = ref(false)
@@ -135,18 +142,6 @@ const revokePreviewUrl = () => {
   previewUrl.value = ''
 }
 
-const hasTIFFHeader = async (file: File) => {
-  try {
-    const header = new Uint8Array(await file.slice(0, 4).arrayBuffer())
-    return header.length === 4 && (
-      (header[0] === 0x49 && header[1] === 0x49 && header[2] === 0x2a && header[3] === 0x00) ||
-      (header[0] === 0x4d && header[1] === 0x4d && header[2] === 0x00 && header[3] === 0x2a)
-    )
-  } catch {
-    return false
-  }
-}
-
 const cropImageStyle = computed(() => ({
   width: `${cropImageState.value.width}px`,
   height: `${cropImageState.value.height}px`,
@@ -156,7 +151,7 @@ const cropImageStyle = computed(() => ({
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value))
 
 const openCrop = async () => {
-  if (!props.crop || !previewUrl.value) return
+  if (!props.crop || keepOriginalImages.value || !previewUrl.value) return
 
   cropSourceUrl.value = previewUrl.value
   cropVisible.value = true
@@ -236,6 +231,7 @@ const cancelCrop = () => {
 
   revokePreviewUrl()
   pendingFile.value = null
+  selectedFile.value = null
   uploadError.value = false
   uploadProgress.value = 0
   resetCrop()
@@ -298,6 +294,12 @@ const handleUpload = async (options: UploadRequestOptions): Promise<void> => {
   }
 
   const needsServerPreview = isRawImageFile(file) || await hasTIFFHeader(file)
+  if (needsServerPreview && keepOriginalImages.value) {
+    ElMessage.warning('RAW/TIFF 需要转换为 JPEG 预览；保留原图请使用 JPEG、PNG、WebP、GIF。')
+    return
+  }
+  selectedFile.value = file
+  resetCrop()
 
   // 清理旧的预览 URL
   revokePreviewUrl()
@@ -314,6 +316,7 @@ const handleUpload = async (options: UploadRequestOptions): Promise<void> => {
       uploadProgress.value = 100
       previewUrl.value = result.file_url
       pendingFile.value = null
+      selectedFile.value = null
       serverPreviewPending.value = false
       emit('update:modelValue', result.file_url)
       if (props.crop) void openCrop()
@@ -335,7 +338,7 @@ const handleUpload = async (options: UploadRequestOptions): Promise<void> => {
   uploadError.value = false
   uploadProgress.value = 0
 
-  if (props.crop && file.type.startsWith('image/')) {
+  if (props.crop && file.type === 'image/jpeg' && !keepOriginalImages.value && await hasJPEGHeader(file)) {
     void openCrop()
   }
 
@@ -349,6 +352,7 @@ const handleDelete = () => {
   // 清理本地预览
   revokePreviewUrl()
   pendingFile.value = null
+  selectedFile.value = null
   serverPreviewPending.value = false
   uploading.value = false
   uploadError.value = false
@@ -381,6 +385,7 @@ const uploadPendingFile = async (): Promise<string | null> => {
       revokePreviewUrl()
     }
     pendingFile.value = null
+    selectedFile.value = null
     serverPreviewPending.value = false
 
     // 更新值
@@ -408,6 +413,7 @@ const getPendingCount = () => {
 
 // 设置待上传文件
 const setPendingFile = (file: File) => {
+  selectedFile.value = file
   pendingFile.value = file
 }
 
@@ -416,6 +422,14 @@ defineExpose({
   uploadPendingFile,
   getPendingCount,
   setPendingFile
+})
+
+watch(keepOriginalImages, keep => {
+  if (!keep || !selectedFile.value || uploading.value || serverPreviewPending.value) return
+  resetCrop()
+  revokePreviewUrl()
+  pendingFile.value = selectedFile.value
+  previewUrl.value = URL.createObjectURL(selectedFile.value)
 })
 
 onUnmounted(() => {
