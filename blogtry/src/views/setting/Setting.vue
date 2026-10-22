@@ -8,7 +8,7 @@
           <el-button type="primary" :loading="saving" :disabled="!canEditSettings" @click="handleSave">
             保存配置
           </el-button>
-          <el-button @click="loadAllConfigs">重置</el-button>
+          <el-button :disabled="saving" @click="handleReset">重置</el-button>
         </div>
       </div>
 
@@ -22,6 +22,10 @@
         <!-- 博客配置标签页 -->
         <el-tab-pane label="博客配置" name="blog">
           <BlogSettingsTab ref="blogTabRef" v-model:form="blogForm" :loading="loading || !canEditSettings" />
+        </el-tab-pane>
+
+        <el-tab-pane label="音乐" name="music">
+          <MusicSettingsTab ref="musicTabRef" :readonly="!canEditSettings" :saving="saving" />
         </el-tab-pane>
 
         <!-- 通知配置标签页 -->
@@ -70,6 +74,7 @@ import { getSettingGroup, updateSettingGroup } from '@/api/sysconfig'
 import { useAuthStore } from '@/stores/auth'
 import BasicSettingsTab from './components/BasicSettingsTab.vue'
 import BlogSettingsTab from './components/BlogSettingsTab.vue'
+import MusicSettingsTab from './components/MusicSettingsTab.vue'
 import NotificationSettingsTab from './components/NotificationSettingsTab.vue'
 import UploadSettingsTab from './components/UploadSettingsTab.vue'
 import AISettingsTab from './components/AISettingsTab.vue'
@@ -88,11 +93,12 @@ const activeTab = ref('basic')
 const route = useRoute()
 const loading = ref(false)
 const saving = ref(false)
-const canEditSettings = computed(() => useAuthStore().isSuperAdmin)
+const canEditSettings = computed(() => useAuthStore().isSuperAdmin())
 
 // 标签页引用
 const blogTabRef = ref<InstanceType<typeof BlogSettingsTab>>()
 const basicTabRef = ref<InstanceType<typeof BasicSettingsTab>>()
+const musicTabRef = ref<InstanceType<typeof MusicSettingsTab>>()
 
 // 基本配置表单
 const basicForm = ref({
@@ -534,9 +540,16 @@ const loadAllConfigs = async () => {
 }
 
 // 统一保存配置
+const handleReset = () => activeTab.value === 'music' ? musicTabRef.value?.load() : loadAllConfigs()
 const handleSave = async () => {
   if (!canEditSettings.value) {
     ElMessage.warning('仅超级管理员可修改系统配置')
+    return
+  }
+
+  if (activeTab.value === 'music') {
+    saving.value = true
+    try { await musicTabRef.value?.save() } finally { saving.value = false }
     return
   }
 
@@ -762,7 +775,8 @@ const handleSave = async () => {
   }
 }
 
-const validTabs = new Set<SettingGroupType | 'import-export'>([
+const validTabs = new Set<SettingGroupType | 'import-export' | 'music'>([
+  'music',
   'basic',
   'blog',
   'notification',
