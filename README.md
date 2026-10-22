@@ -22,7 +22,7 @@
 
 ## 环境要求
 
-- Node.js 22.19.0 或更高版本
+- Node.js 22.23.4（推荐），或满足 `^22.23.4 || ^24.22.1 || ^26.12.1` 的版本
 - npm 10 或更高版本
 - 可访问的博客后端 API
 
@@ -30,6 +30,8 @@
 
 ```bash
 cd blogtry
+nvm install
+nvm use
 npm ci
 npm run dev
 ```
@@ -96,7 +98,7 @@ blog/
 
 推送到 `main` 分支或手动触发 `Deploy blog admin` workflow 后，GitHub Actions 会：
 
-1. 使用 Node.js 22.19.0 安装依赖并构建 `blogtry`
+1. 使用 `blogtry/.nvmrc` 指定的 Node.js 版本（当前为 22.23.4）安装依赖并构建 `blogtry`
 2. 将 `blogtry/dist/` 同步到服务器 `/www/wwwroot/blogtry`
 3. 检查后台地址 <https://admin.xiaoyangxiaozhang.xyz/>
 4. 发布成功后在本次提交上创建递增的 Git tag，例如 `v1.0.0`、`v1.0.1`
