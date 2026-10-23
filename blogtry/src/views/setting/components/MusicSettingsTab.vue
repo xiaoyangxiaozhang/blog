@@ -76,6 +76,7 @@ import { ArrowDown, ArrowRight, ArrowUp, Headset, VideoPause, VideoPlay } from '
 import { ElMessage } from 'element-plus'
 import { getSettingGroup, updateSettingGroup } from '@/api/sysconfig'
 import { uploadFile } from '@/api/file'
+import { extractMp3Cover } from '@/utils/mp3Cover'
 
 interface MusicTrack { id: string; title: string; artist: string; src: string; cover?: string; duration: number }
 const props = defineProps<{ readonly?: boolean; saving?: boolean }>()
@@ -204,6 +205,7 @@ async function uploadMedia(event: Event, track: MusicTrack, kind: 'audio' | 'cov
   uploadingKind.value = kind
   uploadProgress.value = 0
   error.value = ''
+  let coverAdded = false
   try {
     const result = await uploadFile(file, isCover ? '音乐封面' : 'music', { keepOriginal: true, onProgress: progress => { uploadProgress.value = progress.percentage } })
     if (isCover) track.cover = result.file_url
@@ -211,8 +213,23 @@ async function uploadMedia(event: Event, track: MusicTrack, kind: 'audio' | 'cov
       track.src = result.file_url
       track.duration = 0
       if (!track.title.trim()) track.title = file.name.replace(/\.[^.]+$/, '')
+      if (!track.cover?.trim()) {
+        try {
+          const cover = await extractMp3Cover(file)
+          if (cover) {
+            uploadingKind.value = 'cover'
+            uploadProgress.value = 0
+            const result = await uploadFile(cover, '音乐封面', { keepOriginal: true, onProgress: progress => { uploadProgress.value = progress.percentage } })
+            track.cover = result.file_url
+            coverAdded = true
+          }
+        } catch {
+          ElMessage.warning('音频已上传，封面未能自动添加，可手动上传封面或直接保存。')
+          return
+        }
+      }
     }
-    ElMessage.success(`${isCover ? '封面' : '音频'}已上传，保存配置后生效`)
+    ElMessage.success(`${isCover ? '封面' : coverAdded ? '音频和封面' : '音频'}已上传，保存配置后生效`)
   } catch (cause) {
     error.value = cause instanceof Error ? cause.message : '上传失败，请重试。'
   } finally { uploadingId.value = '' }

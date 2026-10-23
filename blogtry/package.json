@@ -39,6 +39,7 @@
     "markdown-it-sup": "^2.0.0",
     "markdown-it-task-lists": "^2.1.1",
     "mermaid": "^11.14.0",
+    "mp3tag.js": "3.17.1",
     "pinia": "^3.0.4",
     "remixicon": "^4.9.1",
     "vue": "^3.5.32",
