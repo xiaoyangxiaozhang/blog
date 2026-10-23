@@ -3,6 +3,14 @@
     <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
     <el-button v-if="!ready && !loading" @click="load">重新加载歌单</el-button>
 
+    <div class="music-download-setting">
+      <div>
+        <label id="music-download-label" for="music-download-switch">允许下载伴奏</label>
+        <p id="music-download-description">开启后，访客可在音乐面板下载歌曲。</p>
+      </div>
+      <el-switch id="music-download-switch" v-model="downloadEnabled" :disabled="locked" aria-labelledby="music-download-label" aria-describedby="music-download-description" />
+    </div>
+
     <ol class="music-rows">
       <li v-for="(track, index) in tracks" :key="track.id" class="music-row">
         <div class="music-row-header">
@@ -81,6 +89,7 @@ import { extractMp3Cover } from '@/utils/mp3Cover'
 interface MusicTrack { id: string; title: string; artist: string; src: string; cover?: string; duration: number }
 const props = defineProps<{ readonly?: boolean; saving?: boolean }>()
 const tracks = ref<MusicTrack[]>([])
+const downloadEnabled = ref(false)
 const loading = ref(false)
 const ready = ref(false)
 const error = ref('')
@@ -112,6 +121,7 @@ async function load() {
       throw new Error('歌单配置格式无效，请检查后台数据。')
     }
     tracks.value = value.map(track => ({ ...track, cover: typeof track.cover === 'string' ? track.cover : '', duration: Number.isFinite(track.duration) ? track.duration : 0 }))
+    downloadEnabled.value = settings['blog.music_download_enabled'] === 'true'
     ready.value = true
     const basic = await getSettingGroup('basic')
     blogUrl.value = basic['basic.blog_url'] || ''
@@ -251,7 +261,10 @@ async function save() {
     return
   }
   try {
-    await updateSettingGroup('blog', { 'blog.music_playlist': JSON.stringify(payload) })
+    await updateSettingGroup('blog', {
+      'blog.music_playlist': JSON.stringify(payload),
+      'blog.music_download_enabled': String(downloadEnabled.value)
+    })
     tracks.value = payload
     error.value = ''
     ElMessage.success('歌单已保存，博客重新加载后生效')
@@ -264,6 +277,13 @@ defineExpose({ load, save })
 
 <style scoped lang="scss">
 .music-settings { max-width: 960px; }
+.music-download-setting {
+  display: flex; align-items: center; justify-content: space-between; gap: 20px;
+  padding: 16px 0; border-bottom: 1px solid var(--el-border-color-lighter);
+  label { font-size: 14px; font-weight: 500; cursor: pointer; }
+  p { margin: 6px 0 0; font-size: 13px; color: var(--el-text-color-regular); line-height: 1.5; }
+  :deep(.el-switch) { flex-shrink: 0; min-height: 44px; }
+}
 .music-rows { list-style: none; padding: 0; margin: 16px 0; }
 .music-row { border-bottom: 1px solid var(--el-border-color-lighter); }
 .music-row-header { display: flex; align-items: center; gap: 12px; }
