@@ -217,7 +217,7 @@ async function uploadMedia(event: Event, track: MusicTrack, kind: 'audio' | 'cov
   error.value = ''
   let coverAdded = false
   try {
-    const result = await uploadFile(file, isCover ? '音乐封面' : 'music', { keepOriginal: true, onProgress: progress => { uploadProgress.value = progress.percentage } })
+    const result = await uploadFile(file, isCover ? '音乐封面' : 'music', { keepOriginal: !isCover, onProgress: progress => { uploadProgress.value = progress.percentage } })
     if (isCover) track.cover = result.file_url
     else {
       track.src = result.file_url
@@ -229,7 +229,7 @@ async function uploadMedia(event: Event, track: MusicTrack, kind: 'audio' | 'cov
           if (cover) {
             uploadingKind.value = 'cover'
             uploadProgress.value = 0
-            const result = await uploadFile(cover, '音乐封面', { keepOriginal: true, onProgress: progress => { uploadProgress.value = progress.percentage } })
+            const result = await uploadFile(cover, '音乐封面', { keepOriginal: false, onProgress: progress => { uploadProgress.value = progress.percentage } })
             track.cover = result.file_url
             coverAdded = true
           }
