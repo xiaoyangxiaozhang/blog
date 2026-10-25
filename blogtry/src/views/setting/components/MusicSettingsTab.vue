@@ -94,6 +94,7 @@ import { uploadFile } from '@/api/file'
 import { readMp3Metadata } from '@/utils/mp3Cover'
 
 interface MusicTrack { id: string; title: string; artist: string; src: string; cover?: string; duration: number }
+type Mp3Metadata = Awaited<ReturnType<typeof readMp3Metadata>>
 const props = defineProps<{ readonly?: boolean; saving?: boolean }>()
 const tracks = ref<MusicTrack[]>([])
 const downloadEnabled = ref(false)
@@ -240,25 +241,47 @@ async function uploadMedia(event: Event, track: MusicTrack, kind: 'audio' | 'cov
     error.value = cause instanceof Error ? cause.message : '上传失败，请重试。'
   } finally { uploadingId.value = '' }
 }
-async function uploadAudio(file: File, track: MusicTrack): Promise<boolean> {
+function uploadTrackInfo(file: File, metadata: Mp3Metadata | null) {
+  const name = file.name.replace(/\.[^.]+$/, '')
+  const separator = name.indexOf(' - ')
+  return {
+    title: (metadata?.title || (separator > 0 ? name.slice(separator + 3) : name)).trim().slice(0, 120),
+    artist: (metadata?.artist || (separator > 0 ? name.slice(0, separator) : '')).trim().slice(0, 120)
+  }
+}
+function normalizeTrackName(value: string) {
+  return value.normalize('NFKC').replace(/(?:\s*\(\s*伴奏\s*\)|[\s·_-]+伴奏)\s*$/, '').replace(/\s+/g, '').toLowerCase()
+}
+function hasTrack(title: string, artist: string) {
+  const name = normalizeTrackName(title)
+  const singer = normalizeTrackName(artist)
+  return !!name && tracks.value.some(track => {
+    const existingSinger = normalizeTrackName(track.artist)
+    return !!track.src.trim() && normalizeTrackName(track.title) === name && (!singer || !existingSinger || singer === existingSinger)
+  })
+}
+async function uploadAudio(file: File, track: MusicTrack, preparedMetadata?: Mp3Metadata | null): Promise<boolean> {
   uploadingKind.value = 'audio'
   uploadProgress.value = 0
   const result = await uploadFile(file, 'music', { keepOriginal: true, onProgress: progress => { uploadProgress.value = progress.percentage } })
   track.src = result.file_url
   track.duration = 0
   try {
-    const metadata = await readMp3Metadata(file)
-    if (!track.title.trim()) track.title = metadata.title || file.name.replace(/\.[^.]+$/, '').slice(0, 120)
-    if (!track.artist.trim()) track.artist = metadata.artist
-    if (!track.cover?.trim() && metadata.cover) {
+    const metadata = preparedMetadata === undefined ? await readMp3Metadata(file) : preparedMetadata
+    const info = uploadTrackInfo(file, metadata)
+    if (!track.title.trim()) track.title = info.title
+    if (!track.artist.trim()) track.artist = info.artist
+    if (!track.cover?.trim() && metadata?.cover) {
       uploadingKind.value = 'cover'
       uploadProgress.value = 0
       const result = await uploadFile(metadata.cover, '音乐封面', { keepOriginal: false, onProgress: progress => { uploadProgress.value = progress.percentage } })
       track.cover = result.file_url
     }
-    return true
+    return metadata !== null
   } catch {
-    if (!track.title.trim()) track.title = file.name.replace(/\.[^.]+$/, '').slice(0, 120)
+    const info = uploadTrackInfo(file, null)
+    if (!track.title.trim()) track.title = info.title
+    if (!track.artist.trim()) track.artist = info.artist
     return false
   }
 }
@@ -268,29 +291,43 @@ async function uploadBatch(event: Event) {
   input.value = ''
   if (!files.length || locked.value) return
   if (files.some(file => !/\.mp3$/i.test(file.name))) { error.value = '批量添加请选择 MP3 文件。'; return }
-  if (files.length > 100 - tracks.value.length) { error.value = `歌单最多 100 首，当前还可添加 ${100 - tracks.value.length} 首，请重新选择。`; return }
   error.value = ''
   batchTotal.value = files.length
   let added = 0
+  let skipped = 0
+  let overLimit = 0
   let incomplete = 0
   const failed: string[] = []
   try {
     for (const [index, file] of files.entries()) {
       batchIndex.value = index + 1
       batchName.value = file.name
-      const track: MusicTrack = { id: crypto.randomUUID(), title: '', artist: '', src: '', cover: '', duration: 0 }
+      uploadingId.value = ''
+      uploadingKind.value = 'audio'
+      uploadProgress.value = 0
+      let metadata: Mp3Metadata | null = null
+      try { metadata = await readMp3Metadata(file) } catch { /* 标签损坏时仍按文件名识别并允许上传。 */ }
+      const info = uploadTrackInfo(file, metadata)
+      if (hasTrack(info.title, info.artist)) { skipped++; continue }
+      if (tracks.value.length >= 100) { overLimit++; continue }
+      const track: MusicTrack = { id: crypto.randomUUID(), ...info, src: '', cover: '', duration: 0 }
       uploadingId.value = track.id
       try {
-        if (!await uploadAudio(file, track)) incomplete++
+        if (!await uploadAudio(file, track, metadata)) incomplete++
         tracks.value.push(track)
         added++
       } catch {
         failed.push(file.name)
       }
     }
-    if (failed.length) error.value = `${failed.length} 首上传失败：${failed.join('、')}。可重新选择失败文件；其余 ${added} 首已添加，保存配置后生效。`
-    if (incomplete) ElMessage.warning(`已添加 ${added} 首，其中 ${incomplete} 首的歌曲信息或封面需手动补充，保存配置后生效。`)
-    else if (added) ElMessage.success(`已添加 ${added} 首，保存配置后生效`)
+    const summary = `已添加 ${added} 首${skipped ? `，跳过 ${skipped} 首重复歌曲` : ''}`
+    const messages: string[] = []
+    if (failed.length) messages.push(`${failed.length} 首上传失败：${failed.join('、')}，可重新选择失败文件。`)
+    if (overLimit) messages.push(`歌单最多 100 首，另有 ${overLimit} 首未添加。`)
+    if (messages.length) error.value = `${messages.join('')}${summary}${added ? '，保存配置后生效。' : '。'}`
+    if (incomplete) ElMessage.warning(`${summary}，其中 ${incomplete} 首的歌曲信息或封面需手动补充，保存配置后生效。`)
+    else if (added) ElMessage.success(`${summary}，保存配置后生效`)
+    else if (skipped && !messages.length) ElMessage.info(`所选歌曲已在歌单中，跳过 ${skipped} 首重复歌曲`)
   } finally {
     uploadingId.value = ''
     batchTotal.value = 0
