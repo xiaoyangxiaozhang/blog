@@ -1,19 +1,22 @@
-// 只读取 MP3 的 ID3 标签，避免为提取封面把整首音频载入内存。
-export async function extractMp3Cover(file: File): Promise<File | null> {
-  if (!/\.mp3$/i.test(file.name)) return null
+// 只读取 MP3 的 ID3 标签，音频原文件不做修改。
+export async function readMp3Metadata(file: File): Promise<{ title: string; artist: string; cover: File | null }> {
+  const metadata = { title: '', artist: '', cover: null as File | null }
+  if (!/\.mp3$/i.test(file.name)) return metadata
   const header = new Uint8Array(await file.slice(0, 10).arrayBuffer())
-  if (header.length < 10 || header[0] !== 0x49 || header[1] !== 0x44 || header[2] !== 0x33) return null
-  if (![2, 3, 4].includes(header[3]!)) return null
-
-  let tagSize = 0
-  for (const byte of header.subarray(6, 10)) {
-    if (byte & 0x80) throw new Error('MP3 标签长度无效')
-    tagSize = tagSize * 128 + byte
+  if (header.length === 10 && header[0] === 0x49 && header[1] === 0x44 && header[2] === 0x33) {
+    if (![2, 3, 4].includes(header[3]!)) return metadata
+    let tagSize = 0
+    for (const byte of header.subarray(6, 10)) {
+      if (byte & 0x80) throw new Error('MP3 标签长度无效')
+      tagSize = tagSize * 128 + byte
+    }
+    if (tagSize > 16 * 1024 * 1024 || tagSize + 10 > file.size) throw new Error('MP3 标签过大或不完整')
   }
-  if (tagSize > 16 * 1024 * 1024 || tagSize + 10 > file.size) throw new Error('MP3 标签过大或不完整')
 
   const { default: MP3Tag } = await import('mp3tag.js')
-  const tags = await MP3Tag.readBlob(file, { id3v1: false, mp4: false, aiff: false, aac: false })
+  const tags = await MP3Tag.readBlob(file, { mp4: false, aiff: false, aac: false })
+  metadata.title = (tags.title || tags.v1?.title || '').replace(/\0/g, '').trim().slice(0, 120)
+  metadata.artist = (tags.artist || tags.v1?.artist || '').replace(/\0/g, '').trim().slice(0, 120)
   const pictures = tags.v2?.APIC || tags.v2?.PIC || []
   const formats: Record<string, { type: string; extension: string }> = {
     'image/jpeg': { type: 'image/jpeg', extension: 'jpg' },
@@ -26,10 +29,11 @@ export async function extractMp3Cover(file: File): Promise<File | null> {
   }
   const supported = pictures.filter(picture => picture.data.length && Object.hasOwn(formats, picture.format.toLowerCase()))
   const picture = supported.find(picture => picture.type === 3) || supported[0]
-  if (!picture) return null
+  if (!picture) return metadata
   const format = formats[picture.format.toLowerCase()]!
-  return new File([Uint8Array.from(picture.data)], `${file.name.replace(/\.mp3$/i, '')}-cover.${format.extension}`, {
+  metadata.cover = new File([Uint8Array.from(picture.data)], `${file.name.replace(/\.mp3$/i, '')}-cover.${format.extension}`, {
     type: format.type,
     lastModified: file.lastModified
   })
+  return metadata
 }
