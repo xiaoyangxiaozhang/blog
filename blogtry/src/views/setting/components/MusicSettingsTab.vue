@@ -13,10 +13,12 @@
 
     <div class="music-list-toolbar">
       <el-button :disabled="locked || tracks.length >= 100" @click="add">添加歌曲</el-button>
-      <el-button :disabled="locked || tracks.length >= 100" @click="batchInput?.click()">批量添加</el-button>
-      <input ref="batchInput" type="file" accept=".mp3,audio/mpeg" multiple hidden :disabled="locked || tracks.length >= 100" aria-label="批量添加 MP3" @change="uploadBatch">
+      <el-button :disabled="locked" @click="batchInput?.click()">批量添加</el-button>
+      <el-button :disabled="locked || hasUnsavedTracks || !tracks.length" :loading="resolvingLyrics" :title="hasUnsavedTracks ? '请先保存歌单' : '为缺失的歌词补充时间轴'" @click="resolveLyrics">补齐歌词</el-button>
+      <input ref="batchInput" type="file" accept=".mp3,audio/mpeg" multiple hidden :disabled="locked" aria-label="批量添加 MP3" @change="uploadBatch">
       <span class="music-count">{{ tracks.length }} / 100 首</span>
     </div>
+    <p class="music-import-hint">同名同歌手自动归组、重复版本跳过。文件名用“_原曲 / _伴奏 / _人声”标注，未标注按原曲。</p>
     <p v-if="batchTotal" class="music-batch-status" role="status" aria-live="polite" aria-atomic="true">
       正在添加 {{ batchIndex }} / {{ batchTotal }}：{{ batchName }} · {{ uploadingKind === 'cover' ? '封面' : '音频' }} {{ uploadProgress }}%
     </p>
@@ -45,17 +47,15 @@
             :title="previewTrackId === track.id && (previewPlaying || previewLoading) ? '暂停试听' : '试听'"
             :aria-pressed="previewTrackId === track.id && (previewPlaying || previewLoading)"
             :aria-busy="previewTrackId === track.id && previewLoading"
-            @click="preview(track)"
+            @click="preview(track, previewTrackId === track.id ? previewMode : defaultMusicMode(track))"
           />
         </div>
-        <div v-if="expandedId === track.id" :id="`music-details-${track.id}`" class="music-row-details">
+        <div v-if="visitedTracks.has(track.id)" v-show="expandedId === track.id" :id="`music-details-${track.id}`" class="music-row-details">
           <div class="music-fields">
             <label :for="`music-title-${track.id}`">曲名</label>
             <el-input :id="`music-title-${track.id}`" v-model="track.title" :disabled="locked" maxlength="120" />
             <label :for="`music-artist-${track.id}`">歌手 / 说明</label>
             <el-input :id="`music-artist-${track.id}`" v-model="track.artist" :disabled="locked" maxlength="120" />
-            <label :for="`music-src-${track.id}`">音频地址</label>
-            <el-input :id="`music-src-${track.id}`" v-model="track.src" :disabled="locked" placeholder="https://… 或 /music/…" maxlength="2048" @input="track.duration = 0" />
             <label :for="`music-cover-${track.id}`">歌曲封面</label>
             <div class="music-cover-field">
               <el-image v-if="track.cover" class="music-cover-preview" :src="coverUrl(track.cover)" fit="cover" :alt="`${track.title || '歌曲'}封面`">
@@ -64,11 +64,23 @@
               <el-input :id="`music-cover-${track.id}`" v-model="track.cover" :disabled="locked" placeholder="图片地址，可留空" maxlength="2048" clearable />
             </div>
           </div>
+          <div class="music-sources" aria-label="歌曲的三个音源">
+            <div v-for="mode in musicModes" :key="mode" class="music-source-row">
+              <label :for="`music-src-${track.id}-${mode}`">{{ musicModeLabels[mode] }}</label>
+              <el-input :id="`music-src-${track.id}-${mode}`" v-model="track.sources[mode].src" :disabled="locked" placeholder="音频地址，可上传或粘贴" maxlength="2048" clearable @input="track.sources[mode].duration = 0; syncMusicDefault(track)" />
+              <label class="music-upload" :class="{ disabled: locked }">
+                {{ uploadingId === track.id && uploadingMode === mode && uploadingKind === 'audio' ? `${uploadProgress}%` : '上传' }}
+                <input type="file" accept=".mp3,.wav,.ogg,.aac,.flac,.m4a" :disabled="locked" :aria-label="`上传${track.title || '新歌曲'}的${musicModeLabels[mode]}`" @change="uploadMedia($event, track, 'audio', mode)">
+              </label>
+              <el-button :icon="previewTrackId === track.id && previewMode === mode && previewPlaying ? VideoPause : VideoPlay" :disabled="locked || !track.sources[mode].src" :aria-label="`试听${track.title}的${musicModeLabels[mode]}`" @click="preview(track, mode)" />
+            </div>
+          </div>
+          <details class="music-source-calibration">
+            <summary>各版本歌词偏移</summary>
+            <p>同一原曲分离的三个版本通常保持 0；正值延后歌词，负值提前。随歌单配置保存。</p>
+            <div v-for="mode in musicModes" :key="mode"><label :for="`music-source-offset-${track.id}-${mode}`">{{ musicModeLabels[mode] }}</label><el-input-number :id="`music-source-offset-${track.id}-${mode}`" v-model="track.sources[mode].offset_ms" :disabled="locked || !track.sources[mode].src" :min="-120000" :max="120000" :step="100" :precision="0" controls-position="right" /><span>毫秒</span></div>
+          </details>
           <div class="music-row-actions">
-            <label class="music-upload" :class="{ disabled: locked }">
-              {{ uploadingId === track.id && uploadingKind === 'audio' ? `上传中 ${uploadProgress}%` : '上传音频' }}
-              <input type="file" accept=".mp3,.wav,.ogg,.aac,.flac" :disabled="locked" :aria-label="`上传${track.title || '新歌曲'}的音频`" @change="uploadMedia($event, track, 'audio')">
-            </label>
             <label class="music-upload" :class="{ disabled: locked }">
               {{ uploadingId === track.id && uploadingKind === 'cover' ? `上传中 ${uploadProgress}%` : '上传封面' }}
               <input type="file" accept=".jpg,.jpeg,.png,.webp,.gif" :disabled="locked" :aria-label="`上传${track.title || '新歌曲'}的封面`" @change="uploadMedia($event, track, 'cover')">
@@ -77,32 +89,41 @@
             <el-button :icon="ArrowDown" :disabled="locked || index === tracks.length - 1" :aria-label="`下移${track.title || '歌曲'}`" @click="move(index, 1)" />
             <el-button type="danger" plain :disabled="locked" @click="remove(track.id)">删除歌曲</el-button>
           </div>
+          <MusicLyricsEditor :track-id="track.id" :title="track.title" :saved="savedLyricsTracks[track.id] === lyricSignature(track)" :active="expandedId === track.id" :readonly="locked" :audio="previewAudio" :preview-active="previewTrackId === track.id" :preview-playing="previewTrackId === track.id && previewPlaying" :source-offset="previewTrackId === track.id ? track.sources[previewMode].offset_ms : 0" :has-vocal-source="!!track.sources.vocal.src" :resolve-allowed="savedTracks[track.id] === trackSignature(track)" @preview="preview(track, previewTrackId === track.id ? previewMode : defaultMusicMode(track))" />
         </div>
       </li>
     </ol>
     <p v-if="ready && !tracks.length" class="music-empty">歌单为空，添加歌曲后保存即可开启播放器。</p>
-    <audio ref="previewAudio" :src="previewSrc || undefined" preload="none" hidden @pause="previewPlaying = false" @ended="stopPreview" @error="previewSrc && handlePreviewError()" />
+    <audio ref="previewAudio" :src="previewSrc || undefined" preload="none" hidden @loadedmetadata="restorePreviewTime" @pause="previewPlaying = false" @ended="stopPreview" @error="previewSrc && handlePreviewError()" />
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { ArrowDown, ArrowRight, ArrowUp, Headset, VideoPause, VideoPlay } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { getSettingGroup, updateSettingGroup } from '@/api/sysconfig'
 import { uploadFile } from '@/api/file'
 import { readMp3Metadata } from '@/utils/mp3Cover'
+import { resolveAllMusicLyrics } from '@/api/music'
+import MusicLyricsEditor from './MusicLyricsEditor.vue'
 
-interface MusicTrack { id: string; title: string; artist: string; src: string; cover?: string; duration: number }
+import { musicModes, musicModeLabels, normalizeMusicTrack, defaultMusicMode, syncMusicDefault, musicUploadInfo, findMusicGroup, type MusicMode, type MusicTrack } from '@/utils/musicSources'
 type Mp3Metadata = Awaited<ReturnType<typeof readMp3Metadata>>
 const props = defineProps<{ readonly?: boolean; saving?: boolean }>()
 const tracks = ref<MusicTrack[]>([])
 const downloadEnabled = ref(false)
 const loading = ref(false)
 const ready = ref(false)
+const savedTracks = ref<Record<string, string>>({})
+const savedLyricsTracks = ref<Record<string, string>>({})
+const visitedTracks = ref(new Set<string>())
+const resolvingLyrics = ref(false)
+const hasUnsavedTracks = computed(() => tracks.value.some(track => savedTracks.value[track.id] !== trackSignature(track)))
 const error = ref('')
 const uploadingId = ref('')
 const uploadingKind = ref<'audio' | 'cover'>('audio')
+const uploadingMode = ref<MusicMode>('original')
 const uploadProgress = ref(0)
 const batchInput = ref<HTMLInputElement | null>(null)
 const batchTotal = ref(0)
@@ -112,11 +133,23 @@ const expandedId = ref('')
 const previewAudio = ref<HTMLAudioElement | null>(null)
 const previewSrc = ref('')
 const previewTrackId = ref('')
+const previewMode = ref<MusicMode>('instrumental')
+let pendingPreviewTime: number | null = null
 const previewPlaying = ref(false)
 const previewLoading = ref(false)
 let previewAttempt = 0
 const blogUrl = ref('')
 const locked = computed(() => props.readonly || props.saving || loading.value || !ready.value || !!uploadingId.value || !!batchTotal.value)
+watch(expandedId, id => { if (id) visitedTracks.value.add(id) })
+function lyricSignature(track: MusicTrack) { return JSON.stringify([track.id, track.title, track.artist, track.src, track.duration]) }
+function trackSignature(track: MusicTrack) { return JSON.stringify([lyricSignature(track), track.sources]) }
+async function resolveLyrics() {
+  if (locked.value || hasUnsavedTracks.value || resolvingLyrics.value) return
+  resolvingLyrics.value = true
+  try { await resolveAllMusicLyrics(); ElMessage.success('已开始补齐歌词，展开歌曲可查看结果') }
+  catch (cause) { error.value = cause instanceof Error ? cause.message : '无法开始处理歌词' }
+  finally { resolvingLyrics.value = false }
+}
 
 async function load() {
   if (uploadingId.value || batchTotal.value) return
@@ -124,6 +157,7 @@ async function load() {
   error.value = ''
   stopPreview()
   expandedId.value = ''
+  visitedTracks.value = new Set()
   ready.value = false
   try {
     const settings = await getSettingGroup('blog')
@@ -132,7 +166,9 @@ async function load() {
     if (!Array.isArray(value) || value.some(item => !item || typeof item.id !== 'string' || typeof item.title !== 'string' || typeof item.artist !== 'string' || typeof item.src !== 'string')) {
       throw new Error('歌单配置格式无效，请检查后台数据。')
     }
-    tracks.value = value.map(track => ({ ...track, cover: typeof track.cover === 'string' ? track.cover : '', duration: Number.isFinite(track.duration) ? track.duration : 0 }))
+    tracks.value = value.map(track => normalizeMusicTrack({ ...track, cover: typeof track.cover === 'string' ? track.cover : '', duration: Number.isFinite(track.duration) ? track.duration : 0 }))
+    savedTracks.value = Object.fromEntries(tracks.value.map(track => [track.id, trackSignature(track)]))
+    savedLyricsTracks.value = Object.fromEntries(tracks.value.map(track => [track.id, lyricSignature(track)]))
     downloadEnabled.value = settings['blog.music_download_enabled'] === 'true'
     ready.value = true
     const basic = await getSettingGroup('basic')
@@ -145,12 +181,12 @@ async function load() {
 function add() {
   if (locked.value || tracks.value.length >= 100) return
   const id = crypto.randomUUID()
-  tracks.value.push({ id, title: '', artist: '', src: '', cover: '', duration: 0 })
+  tracks.value.push(normalizeMusicTrack({ id, title: '', artist: '', src: '', cover: '', duration: 0 }))
   revealTrack(id)
 }
 function revealTrack(id: string, field = 'title') {
   expandedId.value = id
-  nextTick(() => document.getElementById(`music-${field}-${id}`)?.focus())
+  nextTick(() => document.getElementById(field.startsWith('src-') ? `music-src-${id}-${field.slice(4)}` : `music-${field}-${id}`)?.focus())
 }
 function move(index: number, offset: number) {
   const [track] = tracks.value.splice(index, 1)
@@ -173,21 +209,23 @@ function coverUrl(src: string) {
   if (!validSource(src)) return ''
   try { return src.startsWith('/') ? new URL(src, blogUrl.value).href : src } catch { return '' }
 }
-async function preview(track: MusicTrack) {
+async function preview(track: MusicTrack, mode: MusicMode = defaultMusicMode(track)) {
   const attempt = ++previewAttempt
-  if (previewTrackId.value === track.id && (previewPlaying.value || previewLoading.value)) {
+  if (previewTrackId.value === track.id && previewMode.value === mode && (previewPlaying.value || previewLoading.value)) {
     previewAudio.value?.pause()
     previewPlaying.value = false
     previewLoading.value = false
     return
   }
   try {
-    const source = track.src.trim()
+    const source = track.sources[mode].src.trim()
     if (!validSource(source)) throw new Error('请填写有效的音频直链或站内地址。')
     const url = source.startsWith('/') ? new URL(source, blogUrl.value).href : source
     if (previewTrackId.value !== track.id || previewSrc.value !== url) {
+      pendingPreviewTime = previewTrackId.value === track.id ? previewAudio.value?.currentTime || 0 : 0
       previewAudio.value?.pause()
       previewTrackId.value = track.id
+      previewMode.value = mode
       previewSrc.value = url
     }
     previewPlaying.value = false
@@ -204,6 +242,11 @@ async function preview(track: MusicTrack) {
     if (attempt === previewAttempt) handlePreviewError()
   }
 }
+function restorePreviewTime() {
+  const audio = previewAudio.value
+  if (audio && pendingPreviewTime !== null) audio.currentTime = Math.max(0, Math.min(pendingPreviewTime, Number.isFinite(audio.duration) ? Math.max(0, audio.duration - .1) : pendingPreviewTime))
+  pendingPreviewTime = null
+}
 function stopPreview() {
   ++previewAttempt
   previewAudio.value?.pause()
@@ -216,23 +259,24 @@ function handlePreviewError() {
   stopPreview()
   error.value = '试听失败，请检查音频地址是否可访问，以及基本配置中的博客地址。'
 }
-async function uploadMedia(event: Event, track: MusicTrack, kind: 'audio' | 'cover') {
+async function uploadMedia(event: Event, track: MusicTrack, kind: 'audio' | 'cover', mode: MusicMode = 'original') {
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
   input.value = ''
   if (!file || locked.value) return
   const isCover = kind === 'cover'
-  const supported = isCover ? /\.(jpe?g|png|webp|gif)$/i : /\.(mp3|wav|ogg|aac|flac)$/i
+  const supported = isCover ? /\.(jpe?g|png|webp|gif)$/i : /\.(mp3|wav|ogg|aac|flac|m4a)$/i
   if (!supported.test(file.name)) { error.value = isCover ? '请选择 JPG、PNG、WebP 或 GIF 图片。' : '请选择支持的音频格式。'; return }
   uploadingId.value = track.id
   uploadingKind.value = kind
+  uploadingMode.value = mode
   uploadProgress.value = 0
   error.value = ''
   try {
     if (isCover) {
       const result = await uploadFile(file, '音乐封面', { keepOriginal: false, onProgress: progress => { uploadProgress.value = progress.percentage } })
       track.cover = result.file_url
-    } else if (!await uploadAudio(file, track)) {
+    } else if (!await uploadAudio(file, track, mode)) {
       ElMessage.warning('音频已上传，部分歌曲信息或封面未能自动添加，可手动补充后保存。')
       return
     }
@@ -241,34 +285,18 @@ async function uploadMedia(event: Event, track: MusicTrack, kind: 'audio' | 'cov
     error.value = cause instanceof Error ? cause.message : '上传失败，请重试。'
   } finally { uploadingId.value = '' }
 }
-function uploadTrackInfo(file: File, metadata: Mp3Metadata | null) {
-  const name = file.name.replace(/\.[^.]+$/, '')
-  const separator = name.indexOf(' - ')
-  return {
-    title: (metadata?.title || (separator > 0 ? name.slice(separator + 3) : name)).trim().slice(0, 120),
-    artist: (metadata?.artist || (separator > 0 ? name.slice(0, separator) : '')).trim().slice(0, 120)
-  }
-}
-function normalizeTrackName(value: string) {
-  return value.normalize('NFKC').replace(/(?:\s*\(\s*伴奏\s*\)|[\s·_-]+伴奏)\s*$/, '').replace(/\s+/g, '').toLowerCase()
-}
-function hasTrack(title: string, artist: string) {
-  const name = normalizeTrackName(title)
-  const singer = normalizeTrackName(artist)
-  return !!name && tracks.value.some(track => {
-    const existingSinger = normalizeTrackName(track.artist)
-    return !!track.src.trim() && normalizeTrackName(track.title) === name && (!singer || !existingSinger || singer === existingSinger)
-  })
-}
-async function uploadAudio(file: File, track: MusicTrack, preparedMetadata?: Mp3Metadata | null): Promise<boolean> {
+async function uploadAudio(file: File, track: MusicTrack, mode: MusicMode, preparedMetadata?: Mp3Metadata | null): Promise<boolean> {
   uploadingKind.value = 'audio'
   uploadProgress.value = 0
   const result = await uploadFile(file, 'music', { keepOriginal: true, onProgress: progress => { uploadProgress.value = progress.percentage } })
-  track.src = result.file_url
-  track.duration = 0
+  track.sources[mode].src = result.file_url
+  track.sources[mode].duration = 0
+  syncMusicDefault(track)
   try {
     const metadata = preparedMetadata === undefined ? await readMp3Metadata(file) : preparedMetadata
-    const info = uploadTrackInfo(file, metadata)
+    track.sources[mode].duration = metadata?.duration || 0
+    syncMusicDefault(track)
+    const info = musicUploadInfo(file, metadata)
     if (!track.title.trim()) track.title = info.title
     if (!track.artist.trim()) track.artist = info.artist
     if (!track.cover?.trim() && metadata?.cover) {
@@ -279,7 +307,7 @@ async function uploadAudio(file: File, track: MusicTrack, preparedMetadata?: Mp3
     }
     return metadata !== null
   } catch {
-    const info = uploadTrackInfo(file, null)
+    const info = musicUploadInfo(file, null)
     if (!track.title.trim()) track.title = info.title
     if (!track.artist.trim()) track.artist = info.artist
     return false
@@ -294,6 +322,7 @@ async function uploadBatch(event: Event) {
   error.value = ''
   batchTotal.value = files.length
   let added = 0
+  let attached = 0
   let skipped = 0
   let overLimit = 0
   let incomplete = 0
@@ -307,27 +336,29 @@ async function uploadBatch(event: Event) {
       uploadProgress.value = 0
       let metadata: Mp3Metadata | null = null
       try { metadata = await readMp3Metadata(file) } catch { /* 标签损坏时仍按文件名识别并允许上传。 */ }
-      const info = uploadTrackInfo(file, metadata)
-      if (hasTrack(info.title, info.artist)) { skipped++; continue }
-      if (tracks.value.length >= 100) { overLimit++; continue }
-      const track: MusicTrack = { id: crypto.randomUUID(), ...info, src: '', cover: '', duration: 0 }
+      const info = musicUploadInfo(file, metadata)
+      const existing = findMusicGroup(tracks.value, info.title, info.artist)
+      if (existing?.sources[info.mode].src.trim()) { skipped++; continue }
+      if (!existing && tracks.value.length >= 100) { overLimit++; continue }
+      const track = existing || normalizeMusicTrack({ id: crypto.randomUUID(), title: info.title, artist: info.artist, src: '', cover: '', duration: 0 })
       uploadingId.value = track.id
+      uploadingMode.value = info.mode
       try {
-        if (!await uploadAudio(file, track, metadata)) incomplete++
-        tracks.value.push(track)
-        added++
+        if (!await uploadAudio(file, track, info.mode, metadata)) incomplete++
+        if (existing) attached++
+        else { tracks.value.push(track); added++ }
       } catch {
         failed.push(file.name)
       }
     }
-    const summary = `已添加 ${added} 首${skipped ? `，跳过 ${skipped} 首重复歌曲` : ''}`
+    const summary = `新增 ${added} 首，补充 ${attached} 个音源${skipped ? `，跳过 ${skipped} 个重复版本` : ''}`
     const messages: string[] = []
     if (failed.length) messages.push(`${failed.length} 首上传失败：${failed.join('、')}，可重新选择失败文件。`)
     if (overLimit) messages.push(`歌单最多 100 首，另有 ${overLimit} 首未添加。`)
     if (messages.length) error.value = `${messages.join('')}${summary}${added ? '，保存配置后生效。' : '。'}`
     if (incomplete) ElMessage.warning(`${summary}，其中 ${incomplete} 首的歌曲信息或封面需手动补充，保存配置后生效。`)
-    else if (added) ElMessage.success(`${summary}，保存配置后生效`)
-    else if (skipped && !messages.length) ElMessage.info(`所选歌曲已在歌单中，跳过 ${skipped} 首重复歌曲`)
+    else if (added || attached) ElMessage.success(`${summary}，保存配置后生效`)
+    else if (skipped && !messages.length) ElMessage.info(`所选版本已在歌单中，跳过 ${skipped} 个重复音源`)
   } finally {
     uploadingId.value = ''
     batchTotal.value = 0
@@ -335,11 +366,12 @@ async function uploadBatch(event: Event) {
 }
 async function save() {
   if (props.readonly || !ready.value || loading.value || uploadingId.value || batchTotal.value) { ElMessage.warning('请等待歌单加载或文件上传完成'); return }
+  tracks.value.forEach(syncMusicDefault)
   const payload = tracks.value.map(track => ({ ...track, title: track.title.trim(), artist: track.artist.trim(), src: track.src.trim(), cover: track.cover?.trim() || '' }))
-  const invalid = payload.findIndex(track => !track.title || !validSource(track.src))
+  const invalid = payload.findIndex(track => !track.title || !validSource(track.src) || musicModes.some(mode => { const source = track.sources[mode]; return source.src.trim() && (!validSource(source.src.trim()) || !Number.isInteger(source.offset_ms) || Math.abs(source.offset_ms) > 120000) }))
   if (invalid >= 0) {
     const track = payload[invalid]!
-    revealTrack(track.id, track.title ? 'src' : 'title')
+    revealTrack(track.id, track.title ? `src-${defaultMusicMode(track)}` : 'title')
     error.value = `请补全第${invalid + 1}首歌曲的曲名和有效音频地址。`
     return
   }
@@ -351,10 +383,12 @@ async function save() {
   }
   try {
     await updateSettingGroup('blog', {
-      'blog.music_playlist': JSON.stringify(payload),
+      'blog.music_playlist': JSON.stringify(payload.map(track => ({ ...track, sources: Object.fromEntries(musicModes.filter(mode => track.sources[mode].src.trim()).map(mode => [mode, { ...track.sources[mode], src: track.sources[mode].src.trim() }])) }))),
       'blog.music_download_enabled': String(downloadEnabled.value)
     })
     tracks.value = payload
+    savedTracks.value = Object.fromEntries(payload.map(track => [track.id, trackSignature(track)]))
+    savedLyricsTracks.value = Object.fromEntries(payload.map(track => [track.id, lyricSignature(track)]))
     error.value = ''
     ElMessage.success('歌单已保存，博客重新加载后生效')
   } catch (cause) { error.value = cause instanceof Error ? cause.message : '保存歌单失败，请重试。' }
@@ -366,6 +400,13 @@ defineExpose({ load, save })
 
 <style scoped lang="scss">
 .music-settings { max-width: 960px; }
+.music-import-hint { margin: 10px 0 0; color: var(--el-text-color-regular); font-size: 12px; line-height: 1.6; }
+.music-sources { margin-top: 16px; display: grid; gap: 10px; }
+.music-source-row { display: grid; grid-template-columns: 86px minmax(0, 1fr) auto 44px; gap: 12px; align-items: center; min-width: 0; > label:first-child { font-size: 14px; } :deep(.el-button) { min-height: 44px; margin: 0; } .music-upload { padding: 0 12px; } }
+.music-source-calibration { margin: 14px 0 0 98px; font-size: 12px; color: var(--el-text-color-regular); summary { cursor: pointer; min-height: 32px; line-height: 32px; } p { line-height: 1.6; margin: 4px 0 10px; } > div { display: flex; align-items: center; gap: 10px; margin-top: 8px; } label { min-width: 32px; } }
+.music-source-calibration :deep(.el-input-number) { width: 160px; }
+.music-source-calibration summary:focus-visible { outline: 2px solid var(--el-color-primary); outline-offset: 2px; }
+@media (max-width: 640px) { .music-source-row { grid-template-columns: 40px minmax(0, 1fr) auto 44px; gap: 6px; } .music-source-calibration { margin-left: 0; } }
 .music-download-setting {
   display: flex; align-items: center; justify-content: space-between; gap: 20px;
   padding: 16px 0; border-bottom: 1px solid var(--el-border-color-lighter);
