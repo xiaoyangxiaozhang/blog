@@ -26,3 +26,40 @@ export interface ChatbotUsage {
 export function getChatbotUsage(): Promise<ChatbotUsage> {
   return request.get('/admin/chatbot/usage')
 }
+
+export interface ProviderWalletConfig {
+  id: string
+  name: string
+  supported: boolean
+  api_key_configured: boolean
+  api_key_hint: string
+  description: string
+  console_url: string
+}
+
+export interface ProviderWalletAmount {
+  currency: 'CNY' | 'USD'
+  available_balance: string
+  granted_balance?: string
+  topped_up_balance?: string
+  total_credits?: string
+  total_spent?: string
+}
+
+export interface ProviderWalletBalance {
+  provider: string
+  balances: ProviderWalletAmount[]
+  queried_at: string
+}
+
+export function getProviderWallets(): Promise<ProviderWalletConfig[]> {
+  return request.get('/admin/quotas/wallets')
+}
+
+export function saveProviderWalletKey(provider: string, data: { api_key: string; clear?: boolean }): Promise<ProviderWalletConfig> {
+  return request.patch(`/admin/quotas/wallets/${provider}`, data)
+}
+
+export function getProviderWalletBalance(provider: string): Promise<ProviderWalletBalance> {
+  return request.get(`/admin/quotas/wallets/${provider}/balance`)
+}

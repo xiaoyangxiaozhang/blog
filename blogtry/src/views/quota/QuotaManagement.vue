@@ -4,7 +4,7 @@
       <div class="quota-toolbar">
         <div>
           <h2>额度管理</h2>
-          <p>查看聊天助手的账户余额、消费和站内每日调用额度。</p>
+          <p>查看模型服务商的钱包余额，以及聊天助手的站内每日调用额度。</p>
         </div>
         <el-button type="primary" :loading="loading" @click="refresh">刷新额度</el-button>
       </div>
@@ -54,6 +54,8 @@
         </div>
       </section>
 
+      <ProviderWallets ref="providerWallets" />
+
       <div class="quota-links">
         <router-link to="/settings?tab=chatbot">配置聊天助手</router-link>
         <a href="https://bigmodel.cn/finance-center/finance/overview" target="_blank" rel="noopener noreferrer">前往智谱控制台</a>
@@ -66,12 +68,14 @@
 import { computed, onMounted, ref } from 'vue'
 import { getChatbotBalance, getChatbotUsage } from '@/api/quota'
 import type { ChatbotBalance, ChatbotUsage } from '@/api/quota'
+import ProviderWallets from './ProviderWallets.vue'
 
 const loading = ref(false)
 const error = ref('')
 const balance = ref<ChatbotBalance | null>(null)
 const usage = ref<ChatbotUsage | null>(null)
 const usageError = ref('')
+const providerWallets = ref<InstanceType<typeof ProviderWallets> | null>(null)
 const amounts = computed(() => balance.value ? [
   { label: '可用余额', value: balance.value.available_balance },
   { label: '累计消费', value: balance.value.total_spent },
@@ -92,7 +96,7 @@ const refresh = async () => {
   error.value = ''
   usageError.value = ''
   try {
-    const [walletResult, usageResult] = await Promise.allSettled([getChatbotBalance(), getChatbotUsage()])
+    const [walletResult, usageResult] = await Promise.allSettled([getChatbotBalance(), getChatbotUsage(), providerWallets.value?.refresh()])
     if (walletResult.status === 'fulfilled') balance.value = walletResult.value
     else error.value = walletResult.reason instanceof Error ? walletResult.reason.message : '余额查询失败，请稍后重试'
     if (usageResult.status === 'fulfilled') usage.value = usageResult.value
