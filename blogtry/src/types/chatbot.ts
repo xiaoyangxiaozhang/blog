@@ -5,6 +5,7 @@ export interface ChatbotDialogueExample {
 
 export interface ChatbotForm {
   enabled: boolean
+  comment_tools_enabled: boolean
   display_name: string
   avatar: string
   welcome: string

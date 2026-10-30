@@ -206,6 +206,7 @@ const aiForm = ref({
 
 const chatbotForm = ref<ChatbotForm>({
   enabled: false,
+  comment_tools_enabled: false,
   display_name: '',
   avatar: '',
   welcome: '',
@@ -446,6 +447,7 @@ const loadChatbotConfigs = async () => {
 
     Object.assign(chatbotForm.value, {
       enabled: configs.enabled === 'true',
+      comment_tools_enabled: configs.comment_tools_enabled === 'true',
       display_name: configs.display_name || '',
       avatar: configs.avatar || '',
       welcome: configs.welcome || '',
@@ -697,6 +699,7 @@ const handleSave = async () => {
     // 聊天机器人配置（与 AI 摘要、标题配置独立）
     const chatbotPayload: Record<string, string> = {
       enabled: chatbotForm.value.enabled ? 'true' : 'false',
+      comment_tools_enabled: chatbotForm.value.comment_tools_enabled ? 'true' : 'false',
       display_name: chatbotForm.value.display_name,
       avatar: chatbotForm.value.avatar,
       welcome: chatbotForm.value.welcome,

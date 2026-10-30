@@ -13,6 +13,11 @@
       <el-switch v-model="form.enabled" :disabled="loading" />
     </el-form-item>
 
+    <el-form-item label="启用评论助手">
+      <el-switch v-model="form.comment_tools_enabled" aria-label="启用评论助手" :disabled="loading" />
+      <span class="field-hint">仅博主可查询评论和拟回复，发布前仍需手动确认。默认关闭。</span>
+    </el-form-item>
+
     <el-form-item label="显示名称">
       <el-input v-model="form.display_name" placeholder="留空时使用基本配置中的站长姓名" :disabled="loading" />
     </el-form-item>
