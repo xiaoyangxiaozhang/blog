@@ -13,3 +13,16 @@ export interface ChatbotBalance {
 export function getChatbotBalance(): Promise<ChatbotBalance> {
   return request.get('/admin/chatbot/balance')
 }
+
+export interface ChatbotUsage {
+  date: string
+  timezone: string
+  today_requests: number
+  daily_limit: number
+  remaining_requests: number | null
+  queried_at: string
+}
+
+export function getChatbotUsage(): Promise<ChatbotUsage> {
+  return request.get('/admin/chatbot/usage')
+}

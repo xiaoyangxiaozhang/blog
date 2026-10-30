@@ -4,9 +4,9 @@
       <div class="quota-toolbar">
         <div>
           <h2>额度管理</h2>
-          <p>查看聊天助手所用模型账户的余额与消费。</p>
+          <p>查看聊天助手的账户余额、消费和站内每日调用额度。</p>
         </div>
-        <el-button type="primary" :loading="loading" @click="refresh">刷新余额</el-button>
+        <el-button type="primary" :loading="loading" @click="refresh">刷新额度</el-button>
       </div>
 
       <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon class="quota-error" />
@@ -31,6 +31,29 @@
         <el-empty v-else :description="loading ? '正在查询账户余额…' : '暂无余额数据'" />
       </div>
 
+      <section class="quota-usage" aria-label="全站每日调用额度">
+        <h3>全站每日调用额度</h3>
+        <el-alert v-if="usageError" :title="usageError" type="error" :closable="false" show-icon class="quota-error" />
+        <p v-if="usageError && usage" class="quota-note">以下为上次查询的调用统计，尚未更新。</p>
+        <div v-loading="loading" class="quota-content">
+          <template v-if="usage">
+            <div class="quota-meta">
+              <span>统计日期：{{ usage.date }}（{{ usage.timezone }}）</span>
+              <span>查询时间：{{ formatTime(usage.queried_at) }}</span>
+            </div>
+            <div class="quota-grid">
+              <div v-for="item in usageItems" :key="item.label" class="quota-amount">
+                <span>{{ item.label }}</span>
+                <strong>{{ item.value }}</strong>
+                <small>{{ item.hint }}</small>
+              </div>
+            </div>
+            <p class="quota-note">按全站公开聊天请求统计，失败请求也计入额度；不含后台试聊和评论助手。每日按上述服务端时区的自然日重置，上限设为 0 时不限次数。</p>
+          </template>
+          <el-empty v-else :description="loading ? '正在查询调用统计…' : '暂无调用统计'" />
+        </div>
+      </section>
+
       <div class="quota-links">
         <router-link to="/settings?tab=chatbot">配置聊天助手</router-link>
         <a href="https://bigmodel.cn/finance-center/finance/overview" target="_blank" rel="noopener noreferrer">前往智谱控制台</a>
@@ -41,16 +64,23 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { getChatbotBalance } from '@/api/quota'
-import type { ChatbotBalance } from '@/api/quota'
+import { getChatbotBalance, getChatbotUsage } from '@/api/quota'
+import type { ChatbotBalance, ChatbotUsage } from '@/api/quota'
 
 const loading = ref(false)
 const error = ref('')
 const balance = ref<ChatbotBalance | null>(null)
+const usage = ref<ChatbotUsage | null>(null)
+const usageError = ref('')
 const amounts = computed(() => balance.value ? [
   { label: '可用余额', value: balance.value.available_balance },
   { label: '累计消费', value: balance.value.total_spent },
   { label: '今日消费', value: balance.value.today_spent }
+] : [])
+const usageItems = computed(() => usage.value ? [
+  { label: '今日调用次数', value: usage.value.today_requests.toLocaleString('zh-CN'), hint: '次' },
+  { label: '每日上限', value: usage.value.daily_limit === 0 ? '不限' : usage.value.daily_limit.toLocaleString('zh-CN'), hint: '全站每日' },
+  { label: '剩余次数', value: usage.value.remaining_requests === null ? '不限' : usage.value.remaining_requests.toLocaleString('zh-CN'), hint: '次' }
 ] : [])
 
 const formatAmount = (value: string | null) => value === null ? '暂无数据' : `¥${Number(value).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 8 })}`
@@ -60,10 +90,13 @@ const refresh = async () => {
   if (loading.value) return
   loading.value = true
   error.value = ''
+  usageError.value = ''
   try {
-    balance.value = await getChatbotBalance()
-  } catch (cause) {
-    error.value = cause instanceof Error ? cause.message : '余额查询失败，请稍后重试'
+    const [walletResult, usageResult] = await Promise.allSettled([getChatbotBalance(), getChatbotUsage()])
+    if (walletResult.status === 'fulfilled') balance.value = walletResult.value
+    else error.value = walletResult.reason instanceof Error ? walletResult.reason.message : '余额查询失败，请稍后重试'
+    if (usageResult.status === 'fulfilled') usage.value = usageResult.value
+    else usageError.value = usageResult.reason instanceof Error ? usageResult.reason.message : '调用统计查询失败，请稍后重试'
   } finally {
     loading.value = false
   }
@@ -86,6 +119,8 @@ onMounted(refresh)
 .quota-amount small { color: var(--el-text-color-secondary); }
 .quota-links { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 24px; font-size: 14px; }
 .quota-links a { color: var(--el-color-primary); }
+.quota-usage { margin-top: 28px; }
+.quota-usage h3 { margin: 0; font-size: 16px; }
 @media (max-width: 600px) {
   .quota-toolbar { align-items: flex-start; flex-wrap: wrap; }
   .quota-grid { grid-template-columns: 1fr; }
