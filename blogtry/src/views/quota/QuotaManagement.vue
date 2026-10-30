@@ -27,21 +27,20 @@
         </div>
       </dl>
 
-      <div class="quota-meta">
-        <span v-if="balance">{{ balance.provider }} <span class="quota-model">· {{ balance.model }}</span></span>
-        <span v-if="balance" class="quota-spending">累计消费 {{ formatAmount(balance.total_spent) }} <span>· 今日 {{ formatAmount(balance.today_spent) }}</span></span>
-        <a href="https://bigmodel.cn/finance-center/finance/overview" target="_blank" rel="noopener noreferrer">智谱控制台 ↗</a>
-      </div>
-      <div class="quota-meta quota-dates">
-        <span v-if="balance" :title="formatTime(balance.queried_at)">余额更新 {{ formatShortTime(balance.queried_at) }}</span>
-        <span v-if="usage" :title="`次数更新：${formatTime(usage.queried_at)}`">统计日 {{ usage.date }} · {{ usage.timezone }}</span>
-      </div>
-
       <CodexQuota ref="codexQuota" />
       <ProviderWallets ref="providerWallets" />
 
       <details class="quota-help">
-        <summary>统计说明</summary>
+        <summary>余额与统计说明</summary>
+        <div class="quota-meta">
+          <span v-if="balance">{{ balance.provider }} · {{ balance.model }}</span>
+          <span v-if="balance">累计消费 {{ formatAmount(balance.total_spent) }} · 今日 {{ formatAmount(balance.today_spent) }}</span>
+          <a href="https://bigmodel.cn/finance-center/finance/overview" target="_blank" rel="noopener noreferrer">智谱控制台 ↗</a>
+        </div>
+        <div class="quota-meta quota-dates">
+          <span v-if="balance" :title="formatTime(balance.queried_at)">余额更新 {{ formatShortTime(balance.queried_at) }}</span>
+          <span v-if="usage" :title="`次数更新：${formatTime(usage.queried_at)}`">统计日 {{ usage.date }} · {{ usage.timezone }}</span>
+        </div>
         <p>余额为服务商账户钱包，同账户的其他 Key 可能共享余额；不包含资源包或 Coding Plan。消费显示“—”时，表示服务商暂未提供数据。</p>
         <p>次数统计已占用额度的全站公开聊天请求，生成失败也计入；不含后台试聊和评论助手。按显示时区的自然日重置，每日上限设为 0 时不限次数。</p>
       </details>
@@ -99,13 +98,12 @@ onMounted(refresh)
 .quota-actions a, .quota-meta a { color: var(--el-color-primary); font-size: 13px; text-decoration: none; }
 .quota-note, .quota-help { color: var(--el-text-color-secondary); font-size: 12px; line-height: 1.7; }
 .quota-error { margin-top: 14px; }
-.quota-overview { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 24px 0 16px; }
+.quota-overview { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 20px 0 0; }
 .quota-metric { min-width: 0; padding: 16px; border-radius: 8px; background: color-mix(in srgb, var(--el-text-color-primary) 3%, transparent); }
 .quota-metric dt { color: var(--el-text-color-secondary); font-size: 12px; }
 .quota-metric dd { margin: 10px 0 0; font-size: clamp(20px, 2.2vw, 28px); font-weight: 500; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .quota-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; color: var(--el-text-color-secondary); font-size: 12px; line-height: 1.7; }
-.quota-model, .quota-dates { color: var(--el-text-color-secondary); }
-.quota-dates { margin-top: 6px; }
+.quota-meta, .quota-dates { margin-top: 8px; }
 .quota-help { margin-top: 24px; }
 .quota-help summary { cursor: pointer; width: fit-content; }
 .quota-help summary:focus-visible { outline: 2px solid var(--el-color-primary); outline-offset: 3px; }
@@ -115,6 +113,5 @@ onMounted(refresh)
   .quota-actions a { font-size: 12px; }
   .quota-overview { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 20px; }
   .quota-metric { padding: 14px; }
-  .quota-spending { flex-basis: 100%; }
 }
 </style>
