@@ -63,3 +63,25 @@ export function saveProviderWalletKey(provider: string, data: { api_key: string;
 export function getProviderWalletBalance(provider: string): Promise<ProviderWalletBalance> {
   return request.get(`/admin/quotas/wallets/${provider}/balance`)
 }
+
+export interface CodexQuotaWindow {
+  kind: 'primary' | 'secondary'
+  used_percent: number | null
+  duration_mins: number | null
+  resets_at: number | null
+}
+
+export interface CodexQuotaState {
+  connected: boolean
+  snapshot: {
+    collected_at: string
+    buckets: Array<{ id: string; name?: string; plan_type?: string; windows: CodexQuotaWindow[] }>
+  } | null
+  last_attempt_at: string | null
+  last_error: string
+  stale: boolean
+}
+
+export function getCodexQuota(): Promise<CodexQuotaState> {
+  return request.get('/admin/quotas/codex')
+}
