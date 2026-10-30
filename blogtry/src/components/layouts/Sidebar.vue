@@ -108,6 +108,10 @@
           <i class="ri-information-line ri-lg"></i>
           <template #title>系统信息</template>
         </el-menu-item>
+        <el-menu-item index="/quotas">
+          <i class="ri-wallet-3-line ri-lg"></i>
+          <template #title>额度管理</template>
+        </el-menu-item>
         <el-menu-item index="/settings">
           <i class="ri-settings-3-line ri-lg"></i>
           <template #title>系统设置</template>

@@ -110,6 +110,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '文件列表', requiresAuth: true }
       },
       {
+        path: '/quotas',
+        name: 'quotas',
+        component: () => import('@/views/quota/QuotaManagement.vue'),
+        meta: { title: '额度管理', requiresAuth: true, requiresSuperAdmin: true }
+      },
+      {
         path: '/settings',
         name: 'settings',
         component: () => import('@/views/setting/Setting.vue'),
