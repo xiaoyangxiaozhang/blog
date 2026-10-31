@@ -1,7 +1,7 @@
 <template>
   <el-form :model="form" label-width="125px" class="setting-form chatbot-form">
     <el-alert
-      title="这是博主的聊天助手。它会使用关于页资料、已发布文章和下方语气样本，用博主的第一人称交流。"
+      title="助手会结合基础人设、说话示例和博客资料生成回复。"
       type="info"
       :closable="false"
       show-icon
@@ -64,15 +64,42 @@
       <span class="field-hint">聊天模型 API Key 与文章摘要、标题生成配置完全独立。</span>
     </el-form-item>
 
-    <el-form-item label="保存后试聊">
+    <el-divider content-position="left">基础人设</el-divider>
+
+    <el-form-item label="基础人设">
+      <div class="persona-editor">
+        <el-input v-model="form.persona_prompt" type="textarea" :rows="7" maxlength="6000" show-word-limit
+          placeholder="描述助手的身份、性格和聊天方式" :disabled="loading || !form.persona_available" />
+        <div class="persona-editor-actions">
+          <span v-if="form.persona_available" class="field-hint">使用 <code v-pre>{{display_name}}</code> 代表显示名称；修改后可先试聊。</span>
+          <span v-else class="field-hint">基础人设暂不可用，请检查后端版本或重新加载配置。</span>
+          <el-button :disabled="loading || !form.persona_available || !form.default_persona_prompt" @click="restorePersona">恢复默认</el-button>
+        </div>
+      </div>
+    </el-form-item>
+
+    <el-form-item label="对话示例">
+      <div class="dialogue-examples">
+        <div v-for="(item, index) in form.dialogueExamples" :key="index" class="dialogue-example">
+          <el-input v-model="item.question" placeholder="访客问题" :disabled="loading" />
+          <el-input v-model="item.answer" type="textarea" :rows="2" placeholder="你通常会怎么回答" :disabled="loading" />
+          <el-button type="danger" plain :disabled="loading" @click="removeExample(index)">删除</el-button>
+        </div>
+        <el-button plain :disabled="loading" @click="addExample">添加对话示例</el-button>
+      </div>
+    </el-form-item>
+
+    <el-form-item :label="form.persona_available ? '试聊当前内容' : '保存后试聊'">
       <div class="preview-box">
-        <el-input v-model="previewQuestion" placeholder="先保存配置，再输入一句话试聊" :disabled="loading || previewing" />
+        <el-input v-model="previewQuestion" placeholder="输入一句话，试试当前人设" :disabled="loading || previewing" />
         <el-button :loading="previewing" :disabled="loading || !previewQuestion.trim()" @click="preview">发送</el-button>
+        <p class="preview-hint">{{ form.persona_available ? '使用当前人设和说话设置，模型连接与温度使用已保存配置；试聊不会保存修改。' : '使用已保存配置试聊；基础人设暂不可用。' }}</p>
         <div v-if="previewReply" class="preview-reply">{{ previewReply }}</div>
       </div>
     </el-form-item>
 
-    <el-divider content-position="left">说话风格</el-divider>
+    <details class="persona-more">
+      <summary>更多说话设置</summary>
 
     <el-form-item label="整体语气">
       <el-input v-model="form.tone" type="textarea" :rows="5" placeholder="例如：像朋友聊天，真诚、直接、偶尔开玩笑，少用客服话术。" :disabled="loading" />
@@ -100,16 +127,7 @@
       />
     </el-form-item>
 
-    <el-form-item label="对话示例">
-      <div class="dialogue-examples">
-        <div v-for="(item, index) in form.dialogueExamples" :key="index" class="dialogue-example">
-          <el-input v-model="item.question" placeholder="访客问题" :disabled="loading" />
-          <el-input v-model="item.answer" type="textarea" :rows="2" placeholder="你通常会怎么回答" :disabled="loading" />
-          <el-button type="danger" plain :disabled="loading" @click="removeExample(index)">删除</el-button>
-        </div>
-        <el-button plain :disabled="loading" @click="addExample">添加对话示例</el-button>
-      </div>
-    </el-form-item>
+    </details>
 
     <el-divider content-position="left">知识与额度</el-divider>
 
@@ -170,6 +188,10 @@ const clearApiKey = async () => {
   }
 }
 
+const restorePersona = () => {
+  form.value.persona_prompt = form.value.default_persona_prompt
+}
+
 const addExample = () => {
   form.value.dialogueExamples.push({ question: '', answer: '' })
 }
@@ -204,10 +226,29 @@ const testConnection = async () => {
 
 const preview = async () => {
   if (!previewQuestion.value.trim()) return
+  if (form.value.persona_available && !form.value.persona_prompt.trim()) {
+    ElMessage.warning('请填写基础人设')
+    return
+  }
   previewing.value = true
   previewReply.value = ''
   try {
-    const result = await previewChatbot({ message: previewQuestion.value.trim(), history: [] })
+    const result = await previewChatbot({
+      message: previewQuestion.value.trim(),
+      history: [],
+      persona_overrides: form.value.persona_available ? {
+        persona_prompt: form.value.persona_prompt,
+        display_name: form.value.display_name,
+        tone: form.value.tone,
+        catchphrases: form.value.catchphrasesList.map(item => item.value.trim()).filter(Boolean),
+        avoid_phrases: form.value.avoidPhrasesList.map(item => item.value.trim()).filter(Boolean),
+        boundaries: form.value.boundaries,
+        abuse_response_style: form.value.abuse_response_style,
+        dialogue_examples: form.value.dialogueExamples
+          .map(item => ({ question: item.question.trim(), answer: item.answer.trim() }))
+          .filter(item => item.question && item.answer)
+      } : undefined
+    })
     previewReply.value = result.reply || '模型没有返回内容。'
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : '试聊失败')
@@ -230,11 +271,38 @@ const preview = async () => {
     align-items: center;
   }
 
+  .persona-editor { width: 100%; }
+
+  .persona-editor-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+    .field-hint { margin-left: 0; line-height: 1.5; }
+  }
+
+  .persona-more {
+    margin: 12px 0 24px;
+    color: var(--el-text-color-secondary);
+    summary { width: fit-content; margin-bottom: 16px; cursor: pointer; font-size: 14px; }
+    summary:focus-visible { outline: 2px solid var(--admin-brand); outline-offset: 3px; }
+  }
+
   .preview-box {
     display: grid;
     grid-template-columns: minmax(220px, 1fr) auto;
     gap: 8px;
     width: 100%;
+  }
+
+  .preview-hint {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: var(--el-text-color-secondary);
+    font-size: 12px;
+    line-height: 1.5;
   }
 
   .preview-reply {

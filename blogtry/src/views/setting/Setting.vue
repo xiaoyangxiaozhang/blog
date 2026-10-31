@@ -216,6 +216,9 @@ const chatbotForm = ref<ChatbotForm>({
   api_key_hint: '',
   model: '',
   temperature: 0.7,
+  persona_available: false,
+  persona_prompt: '',
+  default_persona_prompt: '',
   tone: '',
   suggestionsList: [],
   catchphrasesList: [],
@@ -457,6 +460,9 @@ const loadChatbotConfigs = async () => {
       api_key_hint: configs.api_key_hint || '',
       model: configs.model || '',
       temperature: Number(configs.temperature || 0.7),
+      persona_available: typeof configs.default_persona_prompt === 'string' && Boolean(configs.default_persona_prompt),
+      persona_prompt: configs.persona_prompt ?? configs.default_persona_prompt ?? '',
+      default_persona_prompt: configs.default_persona_prompt || '',
       tone: configs.tone || '',
       suggestionsList: parseList(configs.suggestions || ''),
       catchphrasesList: parseList(configs.catchphrases || ''),
@@ -477,6 +483,7 @@ const loadChatbotConfigs = async () => {
       clear_api_key: false
     })
   } catch {
+    chatbotForm.value.persona_available = false
     ElMessage.error('获取聊天机器人配置失败')
   }
 }
@@ -546,6 +553,11 @@ const handleReset = () => activeTab.value === 'music' ? musicTabRef.value?.load(
 const handleSave = async () => {
   if (!canEditSettings.value) {
     ElMessage.warning('仅超级管理员可修改系统配置')
+    return
+  }
+
+  if (activeTab.value !== 'music' && chatbotForm.value.persona_available && !chatbotForm.value.persona_prompt.trim()) {
+    ElMessage.warning('请填写聊天机器人的基础人设')
     return
   }
 
@@ -720,6 +732,9 @@ const handleSave = async () => {
       per_minute_limit: String(chatbotForm.value.per_minute_limit),
       per_day_limit: String(chatbotForm.value.per_day_limit),
       global_daily_limit: String(chatbotForm.value.global_daily_limit)
+    }
+    if (chatbotForm.value.persona_available) {
+      chatbotPayload.persona_prompt = chatbotForm.value.persona_prompt
     }
     if (chatbotForm.value.api_key.trim()) {
       chatbotPayload.api_key = chatbotForm.value.api_key.trim()

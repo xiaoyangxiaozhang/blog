@@ -15,6 +15,9 @@ export interface ChatbotForm {
   api_key_hint: string
   model: string
   temperature: number
+  persona_available: boolean
+  persona_prompt: string
+  default_persona_prompt: string
   tone: string
   suggestionsList: Array<{ value: string }>
   catchphrasesList: Array<{ value: string }>
