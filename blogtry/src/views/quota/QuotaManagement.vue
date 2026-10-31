@@ -6,44 +6,49 @@
           <h2>额度管理</h2>
         </div>
         <div class="quota-actions">
-          <router-link to="/settings?tab=chatbot">助手设置</router-link>
+          <router-link v-if="activeView === 'assistant'" to="/settings?tab=chatbot">助手设置</router-link>
           <el-button :loading="loading" aria-label="刷新额度" @click="refresh">刷新</el-button>
         </div>
       </div>
 
-      <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon class="quota-error" />
-      <p v-if="error && balance" class="quota-note">余额显示上次查询结果。</p>
-      <el-alert v-if="usageError" :title="usageError" type="error" :closable="false" show-icon class="quota-error" />
-      <p v-if="usageError && usage" class="quota-note">调用次数显示上次查询结果。</p>
+      <div class="quota-switch" role="group" aria-label="选择额度视图">
+        <button v-for="view in views" :key="view.id" type="button" :class="{ 'is-active': activeView === view.id }" :aria-pressed="activeView === view.id" @click="activeView = view.id">{{ view.label }}</button>
+      </div>
 
-      <dl class="quota-overview" :aria-busy="loading" aria-label="额度概览">
-        <div class="quota-metric">
-          <dt>可用余额</dt>
-          <dd>{{ balance ? formatAmount(balance.available_balance) : '—' }}</dd>
-        </div>
-        <div v-for="item in usageItems" :key="item.label" class="quota-metric">
-          <dt>{{ item.label }}</dt>
-          <dd>{{ item.value }}</dd>
-        </div>
-      </dl>
+      <section v-show="activeView === 'assistant'" aria-label="助手额度">
+        <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon class="quota-error" />
+        <p v-if="error && balance" class="quota-note">余额显示上次查询结果。</p>
+        <el-alert v-if="usageError" :title="usageError" type="error" :closable="false" show-icon class="quota-error" />
+        <p v-if="usageError && usage" class="quota-note">调用次数显示上次查询结果。</p>
 
-      <CodexQuota ref="codexQuota" />
-      <ProviderWallets ref="providerWallets" />
+        <dl class="quota-overview" :aria-busy="loading" aria-label="额度概览">
+          <div class="quota-metric">
+            <dt>可用余额</dt>
+            <dd>{{ balance ? formatAmount(balance.available_balance) : '—' }}</dd>
+          </div>
+          <div v-for="item in usageItems" :key="item.label" class="quota-metric">
+            <dt>{{ item.label }}</dt>
+            <dd>{{ item.value }}</dd>
+          </div>
+        </dl>
 
-      <details class="quota-help">
-        <summary>余额与统计说明</summary>
-        <div class="quota-meta">
-          <span v-if="balance">{{ balance.provider }} · {{ balance.model }}</span>
-          <span v-if="balance">累计消费 {{ formatAmount(balance.total_spent) }} · 今日 {{ formatAmount(balance.today_spent) }}</span>
-          <a href="https://bigmodel.cn/finance-center/finance/overview" target="_blank" rel="noopener noreferrer">智谱控制台 ↗</a>
-        </div>
-        <div class="quota-meta quota-dates">
-          <span v-if="balance" :title="formatTime(balance.queried_at)">余额更新 {{ formatShortTime(balance.queried_at) }}</span>
-          <span v-if="usage" :title="`次数更新：${formatTime(usage.queried_at)}`">统计日 {{ usage.date }} · {{ usage.timezone }}</span>
-        </div>
-        <p>余额为服务商账户钱包，同账户的其他 Key 可能共享余额；不包含资源包或 Coding Plan。消费显示“—”时，表示服务商暂未提供数据。</p>
-        <p>次数统计已占用额度的全站公开聊天请求，生成失败也计入；不含后台试聊和评论助手。按显示时区的自然日重置，每日上限设为 0 时不限次数。</p>
-      </details>
+        <details class="quota-help">
+          <summary>余额与统计说明</summary>
+          <div class="quota-meta">
+            <span v-if="balance">{{ balance.provider }} · {{ balance.model }}</span>
+            <span v-if="balance">累计消费 {{ formatAmount(balance.total_spent) }} · 今日 {{ formatAmount(balance.today_spent) }}</span>
+            <a href="https://bigmodel.cn/finance-center/finance/overview" target="_blank" rel="noopener noreferrer">智谱控制台 ↗</a>
+          </div>
+          <div class="quota-meta quota-dates">
+            <span v-if="balance" :title="formatTime(balance.queried_at)">余额更新 {{ formatShortTime(balance.queried_at) }}</span>
+            <span v-if="usage" :title="`次数更新：${formatTime(usage.queried_at)}`">统计日 {{ usage.date }} · {{ usage.timezone }}</span>
+          </div>
+          <p>余额为服务商账户钱包，同账户的其他 Key 可能共享余额；不包含资源包或 Coding Plan。消费显示“—”时，表示服务商暂未提供数据。</p>
+          <p>次数统计已占用额度的全站公开聊天请求，生成失败也计入；不含后台试聊和评论助手。按显示时区的自然日重置，每日上限设为 0 时不限次数。</p>
+        </details>
+      </section>
+      <CodexQuota v-show="activeView === 'codex'" ref="codexQuota" />
+      <ProviderWallets v-show="activeView === 'wallets'" ref="providerWallets" />
     </el-card>
   </div>
 </template>
@@ -55,6 +60,12 @@ import type { ChatbotBalance, ChatbotUsage } from '@/api/quota'
 import ProviderWallets from './ProviderWallets.vue'
 import CodexQuota from './CodexQuota.vue'
 
+const views = [
+  { id: 'codex', label: 'Codex' },
+  { id: 'assistant', label: '助手' },
+  { id: 'wallets', label: '其他钱包' }
+] as const
+const activeView = ref<(typeof views)[number]['id']>('codex')
 const loading = ref(false)
 const error = ref('')
 const balance = ref<ChatbotBalance | null>(null)
@@ -96,6 +107,10 @@ onMounted(refresh)
 .quota-toolbar, .quota-actions { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .quota-toolbar h2 { margin: 0; font-size: 20px; font-weight: 600; }
 .quota-actions a, .quota-meta a { color: var(--el-color-primary); font-size: 13px; text-decoration: none; }
+.quota-switch { display: flex; width: fit-content; max-width: 100%; gap: 2px; margin-top: 20px; padding: 3px; border-radius: 8px; background: var(--el-fill-color-light); }
+.quota-switch button { padding: 7px 14px; border: 0; border-radius: 6px; background: transparent; color: var(--el-text-color-secondary); font: inherit; font-size: 13px; cursor: pointer; white-space: nowrap; }
+.quota-switch button.is-active { background: var(--el-bg-color); color: var(--el-text-color-primary); box-shadow: 0 1px 3px var(--el-border-color-lighter); }
+.quota-switch button:focus-visible { outline: 2px solid var(--el-color-primary); outline-offset: 2px; }
 .quota-note, .quota-help { color: var(--el-text-color-secondary); font-size: 12px; line-height: 1.7; }
 .quota-error { margin-top: 14px; }
 .quota-overview { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 20px 0 0; }

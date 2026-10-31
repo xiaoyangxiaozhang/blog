@@ -188,6 +188,9 @@ watch(
         display: flex;
         flex-direction: column;
         border-radius: var(--admin-radius-card);
+        --el-card-bg-color: var(--admin-surface);
+        --el-card-border-color: var(--admin-border-soft);
+        color: var(--admin-text);
 
         .el-card__body {
             flex: 1;
@@ -218,6 +221,12 @@ watch(
             :deep(.el-button + .el-button) {
                 margin-left: 0;
             }
+        }
+
+        :deep(.refresh-btn) {
+            --el-button-bg-color: transparent;
+            --el-button-text-color: var(--admin-text-secondary);
+            --el-button-border-color: var(--admin-border-soft);
         }
 
         @media (max-width: 768px) {
@@ -255,6 +264,13 @@ watch(
         display: flex;
         justify-content: flex-end;
         padding-top: 12px;
+        :deep(.el-pagination) {
+            --el-pagination-bg-color: var(--admin-surface);
+            --el-pagination-button-color: var(--admin-text-secondary);
+            --el-pagination-button-disabled-color: var(--admin-text-muted);
+            --el-pagination-button-disabled-bg-color: var(--admin-surface);
+            --el-pagination-hover-color: var(--admin-brand);
+        }
 
         @media (max-width: 768px) {
             justify-content: center;
@@ -268,8 +284,9 @@ watch(
         align-items: center;
         gap: 8px;
         :deep(.el-input-number) { width: 68px; }
-        :deep(.el-input__wrapper) { min-height: 44px; }
-        :deep(input) { font-size: 16px; }
+        :deep(.el-input) { --el-input-bg-color: var(--admin-surface-soft); --el-input-text-color: var(--admin-text); }
+        :deep(.el-input__wrapper) { min-height: 44px; background: var(--admin-surface-soft); box-shadow: 0 0 0 1px var(--admin-border-soft) inset; }
+        :deep(input) { font-size: 16px; color: var(--admin-text); }
         span { color: var(--admin-text-muted); font-size: 13px; }
     }
 

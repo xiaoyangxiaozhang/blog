@@ -1,10 +1,15 @@
 <template>
   <section class="provider-wallets" aria-label="其他服务商钱包">
-    <h3>其他钱包</h3>
+    <div v-if="wallets.length" class="wallet-picker">
+      <label for="wallet-provider">服务商</label>
+      <select id="wallet-provider" v-model="selectedWalletId">
+        <option v-for="wallet in wallets" :key="wallet.id" :value="wallet.id">{{ wallet.name }}</option>
+      </select>
+    </div>
     <el-alert v-if="loadError" :title="loadError" type="error" :closable="false" show-icon />
     <p v-if="!wallets.length" class="wallet-note">{{ refreshing ? '正在加载…' : '暂无钱包配置' }}</p>
 
-    <article v-for="wallet in wallets" :key="wallet.id" class="provider-wallet" :aria-label="wallet.name">
+    <article v-for="wallet in wallets.filter(item => item.id === selectedWalletId)" :key="wallet.id" class="provider-wallet" :aria-label="wallet.name">
       <div class="wallet-summary">
         <div class="wallet-identity">
           <h4>{{ wallet.name }}</h4>
@@ -79,6 +84,7 @@ import { getProviderWallets, getProviderWalletBalance, saveProviderWalletKey } f
 import type { ProviderWalletAmount, ProviderWalletBalance, ProviderWalletConfig } from '@/api/quota'
 
 const wallets = ref<ProviderWalletConfig[]>([])
+const selectedWalletId = ref('')
 const refreshing = ref(false)
 const loadError = ref('')
 const balances = reactive<Record<string, ProviderWalletBalance | undefined>>({})
@@ -142,6 +148,9 @@ const refresh = async () => {
   loadError.value = ''
   try {
     wallets.value = await getProviderWallets()
+    if (!wallets.value.some(wallet => wallet.id === selectedWalletId.value)) {
+      selectedWalletId.value = wallets.value[0]?.id ?? ''
+    }
     for (const wallet of wallets.value) if (!wallet.api_key_configured) delete balances[wallet.id]
     await Promise.all(wallets.value.filter(wallet => wallet.supported && wallet.api_key_configured).map(fetchBalance))
   } catch (cause) {
@@ -156,10 +165,12 @@ defineExpose({ refresh })
 
 <style scoped lang="scss">
 .provider-wallets { margin-top: 28px; }
-h3 { margin: 0 0 6px; font-size: 14px; font-weight: 500; }
+.wallet-picker { display: flex; align-items: center; gap: 10px; }
+.wallet-picker label { color: var(--el-text-color-secondary); font-size: 12px; }
+.wallet-picker select { min-height: 36px; padding: 0 30px 0 10px; color: var(--el-text-color-primary); background: var(--el-fill-color-lighter); border: 0; border-radius: 6px; font: inherit; font-size: 13px; }
+.wallet-picker select:focus-visible { outline: 2px solid var(--el-color-primary); outline-offset: 2px; }
 .wallet-note { margin: 0; color: var(--el-text-color-secondary); font-size: 12px; line-height: 1.7; }
 .provider-wallet { padding: 16px 0; }
-.provider-wallet + .provider-wallet { border-top: 1px solid var(--el-fill-color-lighter); }
 .wallet-summary { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(0, 1.2fr) auto; align-items: center; gap: 12px; }
 .wallet-identity { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 h4 { margin: 0; font-size: 14px; font-weight: 500; }

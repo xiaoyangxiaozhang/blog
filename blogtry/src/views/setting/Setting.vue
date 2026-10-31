@@ -814,8 +814,24 @@ onMounted(() => {
 <style lang="scss" scoped>
 .system-settings {
   height: 100%;
+  min-width: 0;
+  --el-color-primary: var(--admin-brand);
+  --el-disabled-bg-color: var(--admin-surface-elevated);
+  --el-disabled-text-color: var(--admin-text-muted);
+  --el-disabled-border-color: var(--admin-border-soft);
+  --el-bg-color: var(--admin-surface);
+  --el-bg-color-overlay: var(--admin-surface-elevated);
+  --el-fill-color-blank: var(--admin-surface);
+  --el-text-color-primary: var(--admin-text);
+  --el-text-color-regular: var(--admin-text-secondary);
+  --el-text-color-secondary: var(--admin-text-muted);
+  --el-border-color: var(--admin-border);
+  --el-border-color-light: var(--admin-border-soft);
 
   :deep(.el-card) {
+    --el-card-bg-color: var(--admin-surface);
+    --el-card-border-color: var(--admin-border-soft);
+    color: var(--admin-text);
     height: 100%;
     display: flex;
     flex-direction: column;
@@ -837,6 +853,7 @@ onMounted(() => {
 
   h2 {
     margin: 0;
+    color: var(--admin-text);
     font-size: 20px;
     font-weight: 500;
   }
@@ -844,6 +861,11 @@ onMounted(() => {
   .actions {
     display: flex;
     gap: 12px;
+    :deep(.el-button--primary.is-disabled) {
+      background: var(--admin-surface-elevated);
+      border-color: var(--admin-border-soft);
+      color: var(--admin-text-muted);
+    }
   }
 }
 
@@ -900,21 +922,20 @@ onMounted(() => {
     z-index: 2;
     padding: 12px 0;
     background: var(--admin-surface);
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
+    align-items: center;
+    gap: 10px;
 
     h2 {
       font-size: 18px;
+      white-space: nowrap;
     }
 
     .actions {
-      width: 100%;
-
-      .el-button {
-        flex: 1;
+      gap: 8px;
+      :deep(.el-button) {
         min-height: 44px;
         margin-left: 0;
+        padding: 0 12px;
       }
     }
   }

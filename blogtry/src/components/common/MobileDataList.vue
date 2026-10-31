@@ -60,33 +60,37 @@ export default defineComponent({
 </script>
 
 <style scoped lang="scss">
+.mobile-data-list { display: grid; gap: 10px; }
 .mobile-record {
-  padding: 18px 0;
-  border-bottom: 1px solid var(--admin-border);
-  &:first-child { padding-top: 4px; }
-  &:last-child { border-bottom: 0; }
-  dl { margin: 0; display: grid; gap: 10px; }
+  min-width: 0;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--admin-text) 3%, transparent);
+  dl { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 215px), 1fr)); gap: 6px 16px; }
 }
 .mobile-parent {
-  margin: 0 0 12px;
+  margin: 0 0 8px;
   color: var(--admin-text-muted);
   font-size: 12px;
   overflow-wrap: anywhere;
 }
 .mobile-field {
   display: grid;
-  grid-template-columns: 72px minmax(0, 1fr);
+  grid-template-columns: 64px minmax(0, 1fr);
   gap: 8px;
   align-items: start;
   min-width: 0;
   dt { color: var(--admin-text-muted); font-size: 12px; line-height: 1.7; }
   dd { margin: 0; min-width: 0; color: var(--admin-text); font-size: 14px; line-height: 1.7; overflow-wrap: anywhere; }
-  &--wide { grid-template-columns: minmax(0, 1fr); gap: 4px; }
-  &--actions dd { display: flex; flex-wrap: wrap; gap: 8px; }
+  &:has(dd:empty) { display: none; }
+  &--wide { grid-column: 1 / -1; }
+  &--actions { display: block; }
+  &--actions dt { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  &--actions dd { display: flex; flex-wrap: wrap; gap: 4px 8px; }
   :deep(.el-button) { min-height: 44px; min-width: 44px; margin: 0; padding: 8px 12px; }
   :deep(.el-switch) { min-height: 44px; }
   :deep(.el-link) { min-height: 44px; max-width: 100%; }
-  :deep(.el-tag) { max-width: 100%; height: auto; white-space: normal; }
+  :deep(.el-tag) { max-width: 100%; height: auto; white-space: normal; background: color-mix(in srgb, currentColor 12%, transparent); border-color: transparent; }
   :deep(.el-tag__content) { white-space: normal; overflow-wrap: anywhere; }
   :deep(.images), :deep(.images-content), :deep(.author-cell), :deep(.user-cell) { flex-wrap: wrap; }
   :deep(.moment-content), :deep(.comment-text) { -webkit-line-clamp: unset; max-height: none; overflow: visible; white-space: pre-wrap; }
@@ -94,4 +98,9 @@ export default defineComponent({
   :deep([style*="text-overflow"]) { white-space: normal !important; overflow: visible !important; }
   :deep(a:focus-visible) { outline: 2px solid var(--admin-brand); outline-offset: 3px; }
 }
+:global(:root[data-admin-theme='light']) .mobile-record :deep(.el-tag--primary) { color: color-mix(in srgb, var(--el-color-primary) 65%, #000); }
+:global(:root[data-admin-theme='light']) .mobile-record :deep(.el-tag--success) { color: color-mix(in srgb, var(--el-color-success) 65%, #000); }
+:global(:root[data-admin-theme='light']) .mobile-record :deep(.el-tag--warning) { color: color-mix(in srgb, var(--el-color-warning) 65%, #000); }
+:global(:root[data-admin-theme='light']) .mobile-record :deep(.el-tag--danger) { color: color-mix(in srgb, var(--el-color-danger) 65%, #000); }
+:global(:root[data-admin-theme='light']) .mobile-record :deep(.el-tag--info) { color: color-mix(in srgb, var(--el-color-info) 65%, #000); }
 </style>

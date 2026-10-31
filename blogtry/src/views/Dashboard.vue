@@ -769,6 +769,11 @@ onUnmounted(() => {
 </script>
 <style scoped lang="scss">
 .dashboard {
+  :deep(.el-card) {
+    --el-card-bg-color: var(--admin-surface);
+    --el-card-border-color: var(--admin-border-soft);
+    color: var(--admin-text);
+  }
 
   // 顶部区域
   .top-card {
@@ -1135,22 +1140,33 @@ onUnmounted(() => {
 
   // 小屏幕优化（<768px）
   @media (max-width: 767px) {
+    :deep(.el-card) { border-color: var(--admin-border-soft); }
+    .top-card { margin-bottom: 10px; }
     .top-card .top-content {
       .profile-section, .profile-info { min-width: 0; }
       .profile-section { width: 100%; gap: 12px; }
+      .profile-info { overflow-wrap: anywhere; }
       .stats-section { gap: 12px; }
+      .stats-section .stat-item .stat-value { font-weight: 500; font-variant-numeric: tabular-nums; }
     }
+    .overview-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0 !important; }
+    .overview-cards > .el-col { width: auto; max-width: none; padding: 0 !important; margin: 0; }
+    .charts-section { margin-left: 0 !important; margin-right: 0 !important; }
+    .charts-section > .el-col { padding: 0 !important; }
     .overview-cards .overview-card {
       :deep(.el-card__body) { flex-direction: column; align-items: flex-start; gap: 8px; padding: 12px; }
       .card-left .card-icon { width: 32px; height: 32px; font-size: 18px; }
       .card-right { width: 100%; }
+      .card-right .card-value { font-weight: 500; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
       .card-right .card-stats { flex-wrap: wrap; gap: 4px; }
     }
     .charts-section {
       .chart-header { height: auto; min-height: 44px; gap: 8px; }
       .chart-container { min-height: 240px; }
       .calendar-scroll .calendar-container { min-width: 640px; height: 320px; min-height: 320px; }
-      :deep(.el-radio-button__inner) { min-height: 44px; display: inline-flex; align-items: center; }
+      :deep(.el-radio-group) { padding: 3px; gap: 2px; border-radius: 8px; background: color-mix(in srgb, var(--admin-text) 5%, transparent); }
+      :deep(.el-radio-button__inner) { min-height: 44px; display: inline-flex; align-items: center; padding: 0 13px; border: 0; border-radius: 6px !important; box-shadow: none !important; background: transparent; color: var(--admin-text-secondary); }
+      :deep(.el-radio-button.is-active .el-radio-button__inner) { background: var(--admin-surface-elevated); color: var(--admin-text); }
     }
     .calendar-hint { display: block; margin: 0 0 8px; font-size: 12px; color: var(--admin-text-muted); }
     .quick-access-card .quick-access-content { padding: 0; width: 100%; }

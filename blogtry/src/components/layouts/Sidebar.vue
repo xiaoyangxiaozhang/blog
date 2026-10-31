@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="sidebar-container">
   <div class="sidebar" :class="{ 'is-collapse': isCollapse }">
     <div class="logo">
       <img class="logo-mark" src="/favicon.png" alt="" aria-hidden="true" />
@@ -12,38 +12,6 @@
         <template #title><span>仪表盘</span></template>
       </el-menu-item>
 
-      <el-sub-menu index="kimidou">
-        <template #title>
-          <i class="ri-heart-3-line ri-lg"></i>
-          <span>基米斗管理</span>
-        </template>
-        <el-menu-item index="/kimidou/moments">
-          <i class="ri-chat-smile-2-line ri-lg"></i>
-          <template #title>{{ isAdminOrAbove ? '动态管理' : '我的动态' }}</template>
-        </el-menu-item>
-        <el-menu-item index="/kimidou/profile">
-          <i class="ri-user-settings-line ri-lg"></i>
-          <template #title>个人资料</template>
-        </el-menu-item>
-        <template v-if="isAdminOrAbove">
-          <el-menu-item index="/kimidou/users">
-            <i class="ri-team-line ri-lg"></i>
-            <template #title>用户管理</template>
-          </el-menu-item>
-          <el-menu-item index="/kimidou/comments">
-            <i class="ri-message-3-line ri-lg"></i>
-            <template #title>评论管理</template>
-          </el-menu-item>
-          <el-menu-item index="/kimidou/settings">
-            <i class="ri-image-edit-line ri-lg"></i>
-            <template #title>社区设置</template>
-          </el-menu-item>
-          <el-menu-item index="/kimidou/files">
-            <i class="ri-folder-image-line ri-lg"></i>
-            <template #title>社区文件</template>
-          </el-menu-item>
-        </template>
-      </el-sub-menu>
 
       <el-sub-menu v-if="isSuperAdmin" index="content">
         <template #title>
@@ -117,6 +85,38 @@
           <template #title>系统设置</template>
         </el-menu-item>
       </el-sub-menu>
+      <el-sub-menu index="kimidou">
+        <template #title>
+          <i class="ri-heart-3-line ri-lg"></i>
+          <span>基米斗管理</span>
+        </template>
+        <el-menu-item index="/kimidou/moments">
+          <i class="ri-chat-smile-2-line ri-lg"></i>
+          <template #title>{{ isAdminOrAbove ? '动态管理' : '我的动态' }}</template>
+        </el-menu-item>
+        <el-menu-item index="/kimidou/profile">
+          <i class="ri-user-settings-line ri-lg"></i>
+          <template #title>个人资料</template>
+        </el-menu-item>
+        <template v-if="isAdminOrAbove">
+          <el-menu-item index="/kimidou/users">
+            <i class="ri-team-line ri-lg"></i>
+            <template #title>用户管理</template>
+          </el-menu-item>
+          <el-menu-item index="/kimidou/comments">
+            <i class="ri-message-3-line ri-lg"></i>
+            <template #title>评论管理</template>
+          </el-menu-item>
+          <el-menu-item index="/kimidou/settings">
+            <i class="ri-image-edit-line ri-lg"></i>
+            <template #title>社区设置</template>
+          </el-menu-item>
+          <el-menu-item index="/kimidou/files">
+            <i class="ri-folder-image-line ri-lg"></i>
+            <template #title>社区文件</template>
+          </el-menu-item>
+        </template>
+      </el-sub-menu>
     </el-menu>
   </div>
   </div>
@@ -145,14 +145,18 @@ const handleMenuSelect = () => {
 </script>
 
 <style scoped lang="scss">
+.sidebar-container { height: 100%; min-height: 0; }
 .sidebar {
   height: 100%;
   padding: 0 10px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
 
   .logo {
     height: 64px;
     padding: 10px 8px;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
     display: flex;
     align-items: center;
     justify-content: flex-start;
@@ -191,7 +195,8 @@ const handleMenuSelect = () => {
     .el-menu-item,
     .el-sub-menu__title {
       height: 44px;
-      margin: 4px 0;
+      line-height: 44px;
+      margin: 2px 0;
       border-radius: var(--admin-radius-control);
       font-size: 14px;
       transition: background-color 180ms ease, color 180ms ease;
@@ -203,7 +208,7 @@ const handleMenuSelect = () => {
       }
 
       &:hover {
-        background: var(--admin-brand-soft);
+        background: color-mix(in srgb, var(--admin-text) 5%, transparent);
         color: var(--admin-text);
       }
     }
@@ -211,7 +216,7 @@ const handleMenuSelect = () => {
     .el-menu-item.is-active {
       background: var(--admin-brand-soft);
       color: var(--admin-brand);
-      font-weight: 600;
+      font-weight: 500;
     }
 
     .el-sub-menu .el-menu {
