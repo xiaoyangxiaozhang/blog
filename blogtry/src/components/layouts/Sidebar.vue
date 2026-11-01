@@ -11,6 +11,10 @@
         <i class="ri-dashboard-2-line ri-lg"></i>
         <template #title><span>仪表盘</span></template>
       </el-menu-item>
+      <el-menu-item v-if="isSuperAdmin" index="/recruitment">
+        <i class="ri-briefcase-line ri-lg"></i>
+        <template #title><span>招聘进展</span></template>
+      </el-menu-item>
 
 
       <el-sub-menu v-if="isSuperAdmin" index="content">

@@ -116,6 +116,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '额度管理', requiresAuth: true, requiresSuperAdmin: true }
       },
       {
+        path: '/recruitment',
+        name: 'recruitment',
+        component: () => import('@/views/recruitment/Recruitment.vue'),
+        meta: { title: '招聘进展', requiresAuth: true, requiresSuperAdmin: true }
+      },
+      {
         path: '/settings',
         name: 'settings',
         component: () => import('@/views/setting/Setting.vue'),
