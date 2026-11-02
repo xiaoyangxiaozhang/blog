@@ -99,3 +99,14 @@ export interface CodexQuotaState {
 export function getCodexQuota(): Promise<CodexQuotaState> {
   return request.get('/admin/quotas/codex')
 }
+
+export interface OpenAIQuotaConfig {
+  key_configured: boolean
+  grant: number
+  start_date: string
+  expiry_date: string
+}
+export interface OpenAICost { cost: number; estimated_remaining: number; queried_at: string }
+export function getOpenAIQuota(): Promise<OpenAIQuotaConfig> { return request.get('/admin/quotas/openai') }
+export function saveOpenAIQuota(data: OpenAIQuotaConfig & { admin_key: string; clear?: boolean }): Promise<OpenAIQuotaConfig> { return request.patch('/admin/quotas/openai', data) }
+export function getOpenAICost(): Promise<OpenAICost> { return request.get('/admin/quotas/openai/cost') }

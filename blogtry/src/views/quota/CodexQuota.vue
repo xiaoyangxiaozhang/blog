@@ -1,7 +1,7 @@
 <template>
   <section class="codex-quota" aria-label="Codex 额度看板">
     <div class="codex-heading">
-      <h3>额度概览</h3>
+      <h3>Codex 额度</h3>
       <span class="codex-status" :class="{ 'is-stale': state?.stale || state?.last_error || error, 'is-ready': status === '自动同步' }">{{ status }}</span>
     </div>
     <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon class="codex-error" />

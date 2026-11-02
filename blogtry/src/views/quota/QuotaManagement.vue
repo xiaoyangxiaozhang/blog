@@ -47,7 +47,10 @@
           <p>次数统计已占用额度的全站公开聊天请求，生成失败也计入；不含后台试聊和评论助手。按显示时区的自然日重置，每日上限设为 0 时不限次数。</p>
         </details>
       </section>
-      <CodexQuota v-show="activeView === 'codex'" ref="codexQuota" />
+      <section v-show="activeView === 'codex'" aria-label="GPT 额度">
+        <CodexQuota ref="codexQuota" />
+        <OpenAIQuota ref="openAIQuota" />
+      </section>
       <ProviderWallets v-show="activeView === 'wallets'" ref="providerWallets" />
     </el-card>
   </div>
@@ -59,9 +62,10 @@ import { getChatbotBalance, getChatbotUsage } from '@/api/quota'
 import type { ChatbotBalance, ChatbotUsage } from '@/api/quota'
 import ProviderWallets from './ProviderWallets.vue'
 import CodexQuota from './CodexQuota.vue'
+import OpenAIQuota from './OpenAIQuota.vue'
 
 const views = [
-  { id: 'codex', label: 'Codex' },
+  { id: 'codex', label: 'GPT' },
   { id: 'assistant', label: '助手' },
   { id: 'wallets', label: '其他钱包' }
 ] as const
@@ -72,6 +76,7 @@ const balance = ref<ChatbotBalance | null>(null)
 const usage = ref<ChatbotUsage | null>(null)
 const usageError = ref('')
 const providerWallets = ref<InstanceType<typeof ProviderWallets> | null>(null)
+const openAIQuota = ref<InstanceType<typeof OpenAIQuota> | null>(null)
 const codexQuota = ref<InstanceType<typeof CodexQuota> | null>(null)
 const usageItems = computed(() => [
   { label: '今日调用次数', value: usage.value ? usage.value.today_requests.toLocaleString('zh-CN') : '—' },
@@ -89,7 +94,7 @@ const refresh = async () => {
   error.value = ''
   usageError.value = ''
   try {
-    const [walletResult, usageResult] = await Promise.allSettled([getChatbotBalance(), getChatbotUsage(), providerWallets.value?.refresh(), codexQuota.value?.refresh()])
+    const [walletResult, usageResult] = await Promise.allSettled([getChatbotBalance(), getChatbotUsage(), providerWallets.value?.refresh(), codexQuota.value?.refresh(), openAIQuota.value?.refresh()])
     if (walletResult.status === 'fulfilled') balance.value = walletResult.value
     else error.value = walletResult.reason instanceof Error ? walletResult.reason.message : '余额查询失败，请稍后重试'
     if (usageResult.status === 'fulfilled') usage.value = usageResult.value
