@@ -715,8 +715,6 @@ const handleSave = async () => {
       display_name: chatbotForm.value.display_name,
       avatar: chatbotForm.value.avatar,
       welcome: chatbotForm.value.welcome,
-      base_url: chatbotForm.value.base_url,
-      model: chatbotForm.value.model,
       temperature: String(chatbotForm.value.temperature),
       tone: chatbotForm.value.tone,
       suggestions: JSON.stringify(chatbotForm.value.suggestionsList.map(item => item.value).filter(Boolean)),
@@ -736,12 +734,6 @@ const handleSave = async () => {
     if (chatbotForm.value.persona_available) {
       chatbotPayload.persona_prompt = chatbotForm.value.persona_prompt
     }
-    if (chatbotForm.value.api_key.trim()) {
-      chatbotPayload.api_key = chatbotForm.value.api_key.trim()
-    } else if (chatbotForm.value.clear_api_key) {
-      chatbotPayload.clear_api_key = 'true'
-    }
-
     // OAuth 配置
     const oauthPayload: Record<string, string> = {
       'oauth.github.enabled': oauthForm.value['github.enabled'],

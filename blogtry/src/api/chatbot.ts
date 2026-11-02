@@ -39,3 +39,39 @@ export function previewChatbot(data: {
     page_context: { path: '/admin/settings', article_slug: '' }
   })
 }
+
+export interface ChatbotConnection {
+  id: number
+  name: string
+  base_url: string
+  model: string
+  is_active: boolean
+  api_key_configured: boolean
+  api_key_hint: string
+}
+
+export interface ChatbotConnectionInput {
+  name: string
+  base_url: string
+  model: string
+  api_key: string
+}
+
+export function getChatbotConnections(): Promise<ChatbotConnection[]> {
+  return request.get('/admin/chatbot/connections')
+}
+export function createChatbotConnection(data: ChatbotConnectionInput): Promise<ChatbotConnection> {
+  return request.post('/admin/chatbot/connections', data)
+}
+export function updateChatbotConnection(id: number, data: ChatbotConnectionInput): Promise<ChatbotConnection> {
+  return request.put(`/admin/chatbot/connections/${id}`, data)
+}
+export function activateChatbotConnection(id: number): Promise<void> {
+  return request.post(`/admin/chatbot/connections/${id}/activate`)
+}
+export function deleteChatbotConnection(id: number): Promise<void> {
+  return request.delete(`/admin/chatbot/connections/${id}`)
+}
+export function testChatbotConnection(id: number): Promise<void> {
+  return request.post(`/admin/chatbot/connections/${id}/test`)
+}

@@ -31,37 +31,9 @@
     </el-form-item>
 
     <el-divider content-position="left">独立模型配置</el-divider>
-
-    <el-form-item label="API 端点">
-      <el-input v-model="form.base_url" placeholder="例如 https://api.deepseek.com" :disabled="loading" />
-    </el-form-item>
-
-    <el-form-item label="API Key">
-      <el-input
-        v-model="form.api_key"
-        type="password"
-        show-password
-        autocomplete="new-password"
-        :placeholder="form.api_key_configured ? `已配置 ${form.api_key_hint}，留空保持不变` : '输入聊天机器人专用 API Key'"
-        :disabled="loading"
-      >
-        <template #append>
-          <el-button v-if="form.api_key_configured" :disabled="loading" @click="clearApiKey">清除</el-button>
-        </template>
-      </el-input>
-    </el-form-item>
-
-    <el-form-item label="模型名称">
-      <el-input v-model="form.model" placeholder="例如 deepseek-chat" :disabled="loading" />
-    </el-form-item>
-
+    <ChatbotConnections :loading="loading" />
     <el-form-item label="温度">
       <el-input-number v-model="form.temperature" :min="0" :max="2" :step="0.1" :precision="1" :disabled="loading" />
-    </el-form-item>
-
-    <el-form-item label=" " class="test-row">
-      <el-button :loading="testing" :disabled="loading" @click="testConnection">测试连接</el-button>
-      <span class="field-hint">聊天模型 API Key 与文章摘要、标题生成配置完全独立。</span>
     </el-form-item>
 
     <el-divider content-position="left">基础人设</el-divider>
@@ -160,33 +132,21 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import JsonListEditor from '@/components/common/JsonListEditor.vue'
-import { previewChatbot, testChatbotConfig } from '@/api/chatbot'
+import { previewChatbot } from '@/api/chatbot'
+import ChatbotConnections from './ChatbotConnections.vue'
 import type { ChatbotForm } from '@/types/chatbot'
 
 const form = defineModel<ChatbotForm>('form', { required: true })
 defineProps<{ loading?: boolean }>()
 
-const testing = ref(false)
 const previewing = ref(false)
 const previewQuestion = ref('')
 const previewReply = ref('')
 const singleTextFields = [
   { key: 'value', type: 'text' as const, placeholder: '填写内容', style: 'flex: 1' }
 ]
-
-const clearApiKey = async () => {
-  try {
-    await ElMessageBox.confirm('清除后聊天机器人将无法调用模型，确定继续吗？', '清除 API Key', { type: 'warning' })
-    form.value.api_key = ''
-    form.value.clear_api_key = true
-    form.value.api_key_configured = false
-    form.value.api_key_hint = ''
-  } catch {
-    // 用户取消操作。
-  }
-}
 
 const restorePersona = () => {
   form.value.persona_prompt = form.value.default_persona_prompt
@@ -198,30 +158,6 @@ const addExample = () => {
 
 const removeExample = (index: number) => {
   form.value.dialogueExamples.splice(index, 1)
-}
-
-const testConnection = async () => {
-  if (!form.value.base_url || !form.value.model) {
-    ElMessage.warning('请先填写 API 端点和模型名称')
-    return
-  }
-  if (!form.value.api_key && !form.value.api_key_configured) {
-    ElMessage.warning('请先填写聊天机器人 API Key')
-    return
-  }
-  testing.value = true
-  try {
-    await testChatbotConfig({
-      base_url: form.value.base_url,
-      api_key: form.value.api_key,
-      model: form.value.model
-    })
-    ElMessage.success('聊天机器人连接成功')
-  } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : '连接失败')
-  } finally {
-    testing.value = false
-  }
 }
 
 const preview = async () => {
