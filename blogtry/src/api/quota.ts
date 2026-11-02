@@ -71,12 +71,26 @@ export interface CodexQuotaWindow {
   resets_at: number | null
 }
 
+export interface CodexTokenUsage {
+  collected_at: string
+  timezone: string
+  days: Array<{
+    date: string
+    input_tokens: number
+    cached_input_tokens: number
+    output_tokens: number
+    reasoning_output_tokens: number
+    total_tokens: number
+  }>
+}
+
 export interface CodexQuotaState {
   connected: boolean
   snapshot: {
     collected_at: string
     buckets: Array<{ id: string; name?: string; plan_type?: string; windows: CodexQuotaWindow[] }>
   } | null
+  token_usage?: CodexTokenUsage | null
   last_attempt_at: string | null
   last_error: string
   stale: boolean

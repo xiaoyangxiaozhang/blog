@@ -28,6 +28,20 @@
         <CodexQuotaHistory :snapshot="state.snapshot" />
       </div>
     </template>
+    <section class="codex-token" aria-label="本机 Token 用量">
+      <div class="codex-token-heading">
+        <h4>Token 用量</h4>
+        <span v-if="tokenDay">{{ tokenDay.date }} · {{ state?.token_usage?.timezone }} · {{ formatTime(state!.token_usage!.collected_at) }} 采集</span>
+      </div>
+      <div v-if="tokenDay" class="codex-token-metrics">
+        <div><span>总计</span><strong>{{ formatTokens(tokenDay.total_tokens) }}</strong></div>
+        <div><span>输入（含缓存）</span><strong>{{ formatTokens(tokenDay.input_tokens) }}</strong></div>
+        <div><span>缓存输入</span><strong>{{ formatTokens(tokenDay.cached_input_tokens) }}</strong></div>
+        <div><span>输出（含推理）</span><strong>{{ formatTokens(tokenDay.output_tokens) }}</strong></div>
+      </div>
+      <p v-else class="codex-token-empty">{{ state?.token_usage ? '暂无本机 Token 记录' : '本机 Token 用量尚未同步' }}</p>
+      <p class="codex-token-note">本机日志统计，不代表完整账号用量。</p>
+    </section>
     <div class="codex-footer">
       <time v-if="state?.snapshot" :datetime="state.snapshot.collected_at" :title="formatTime(state.snapshot.collected_at)">{{ shortTime(state.snapshot.collected_at) }} 同步 · 每 5 分钟更新</time>
       <a href="https://chatgpt.com/codex/settings/usage" target="_blank" rel="noopener noreferrer">用量面板 ↗</a>
@@ -46,6 +60,8 @@ const loading=ref(false)
 const error=ref('')
 let timer:ReturnType<typeof setInterval>|undefined
 const windows=computed(()=>state.value?.snapshot?.buckets.flatMap(bucket=>bucket.windows.map(window=>({...window,id:bucket.id,label:bucket.name||(bucket.id==='codex'?'Codex':bucket.id),plan_type:bucket.plan_type})))||[])
+const tokenDay=computed(()=>state.value?.token_usage?.days?.reduce((latest, day)=>!latest || day.date > latest.date ? day : latest, undefined as NonNullable<CodexQuotaState['token_usage']>['days'][number] | undefined))
+const formatTokens=(value:number)=>value.toLocaleString('zh-CN')
 const status=computed(()=>error.value?'读取失败':state.value?.last_error?(state.value.snapshot?'同步失败，显示上次数据':'同步失败'):!state.value?.connected?'未连接':!state.value.snapshot?'等待同步':state.value.stale?'数据已过期':'自动同步')
 const percent=(value:number)=>Math.max(0,Math.min(100,value)).toLocaleString('zh-CN',{maximumFractionDigits:1})
 const windowLabel=(mins:number|null,kind:string)=>mins===null?(kind==='primary'?'主要窗口':'附加窗口'):mins%1440===0?`${mins/1440} 天窗口`:mins%60===0?`${mins/60} 小时窗口`:`${mins} 分钟窗口`
@@ -84,9 +100,20 @@ h3 { margin: 0; font-size: 16px; font-weight: 600; }
 .codex-track span { display: block; height: 100%; border-radius: inherit; background: var(--el-color-primary); transition: width .2s ease; }
 .codex-window.is-stale .codex-track span { background: var(--el-text-color-secondary); }
 .codex-window-meta { margin-top: 12px; color: var(--el-text-color-secondary); font-size: 12px; line-height: 1.5; font-variant-numeric: tabular-nums; }
+.codex-token { margin-top: 12px; padding: 18px 20px; border-radius: 12px; background: color-mix(in srgb, var(--el-text-color-primary) 3%, transparent); }
+.codex-token-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.codex-token-heading h4 { margin: 0; font-size: 14px; font-weight: 500; }
+.codex-token-heading > span, .codex-token-empty, .codex-token-note { color: var(--el-text-color-secondary); font-size: 12px; }
+.codex-token-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+.codex-token-metrics div { min-width: 0; }
+.codex-token-metrics span, .codex-token-metrics strong { display: block; }
+.codex-token-metrics span { color: var(--el-text-color-secondary); font-size: 12px; }
+.codex-token-metrics strong { margin-top: 6px; font-size: 17px; font-weight: 500; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.codex-token-empty { margin: 14px 0 0; }
+.codex-token-note { margin: 14px 0 0; line-height: 1.5; }
 .codex-footer { justify-content: flex-start; margin-top: 16px; gap: 6px 16px; }
 .codex-footer a { color: var(--el-color-primary); text-decoration: none; }
 @media (max-width: 800px) { .codex-dashboard { grid-template-columns: minmax(0, 1fr); } .codex-windows { grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); } }
-@media (max-width: 600px) { .codex-window { padding: 18px; } }
+@media (max-width: 600px) { .codex-window { padding: 18px; } .codex-token { padding: 18px; } .codex-token-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (prefers-reduced-motion: reduce) { .codex-track span { transition: none; } }
 </style>
